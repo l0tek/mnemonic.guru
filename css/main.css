@@ -1,0 +1,33 @@
+#particles-js {
+    background: no-repeat center center;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+    z-index: 100;  
+    background-attachment:fixed;   
+    position: fixed;
+    height: 100vh;
+    min-height: 350px;  
+    width: 100%;
+  }
+
+  .static_m {
+    position: fixed;    
+  
+  }
+
+  .post-content {
+    
+    color: #fff;
+    font-size: 12px;
+    Opacity: .5;
+    margin: 0 auto;
+    margin-top: 154px;
+    margin-left: 300px;
+    text-align:center;
+    position: absolute;
+    width:20%;
+
+    
+}
