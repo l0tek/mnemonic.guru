@@ -14,20 +14,52 @@
 
   .static_m {
     position: fixed;    
-  
   }
 
-  .post-content {
-    
+  .fefe-content {
     color: #fff;
     font-size: 12px;
     Opacity: .5;
     margin: 0 auto;
-    margin-top: 154px;
-    margin-left: 300px;
+    margin-top: 454px;
+    margin-left: 100px;
     text-align:center;
     position: absolute;
-    width:20%;
+    width:25em;
+}
 
-    
+.hnrss-content {
+  color: #fff;
+  font-size: 12px;
+  Opacity: .5;
+  margin: 0 auto;
+  margin-top: 454px;
+  margin-left: 420px;
+  text-align:center;
+  position: absolute;
+  width:25em;
+}
+
+.fefe-content {
+  color: #fff;
+  font-size: 12px;
+  Opacity: .5;
+  margin: 0 auto;
+  margin-top: 454px;
+  margin-left: 100px;
+  text-align:center;
+  position: absolute;
+  width:25em;
+}
+
+.heise-content {
+color: #fff;
+font-size: 12px;
+Opacity: .5;
+margin: 0 auto;
+margin-top: 454px;
+margin-left: 640px;
+text-align:center;
+position: absolute;
+width:25em;
 }
