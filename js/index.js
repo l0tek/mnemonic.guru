@@ -1,3 +1,11 @@
+function random_item(items)
+{
+  
+return items[Math.floor(Math.random()*items.length)];
+     
+}
+
+
 /* default dom id (particles-js) */
 //particlesJS();
 
@@ -65,49 +73,31 @@ $(window).bind('resize', function(e)
   }, 100);
 });
 
-// var FEED_URL = 'https://yacdn.org/proxy/https://blog.fefe.de/rss.xml';
-// var x = 0;
-// var id = "fefe_post";
+
+// $("#fefe_post").rss("https://yacdn.org/proxy/https://blog.fefe.de/rss.xml", {
+//     limit: 3,
+//     layoutTemplate: '<ul class="inline">{entries}</ul>',
+//     entryTemplate: '<li><a href="{url}">[{author}] {title}</a></li>'
+// })
+
+// $("#hnrss_post").rss("https://api.allorigins.win/raw?url=https://hnrss.org/newest?points=5", {
+//     limit: 3,
+//     layoutTemplate: '<ul>{entries}</ul>',
+//     entryTemplate: '<li><a href="{url}">[{author}] {title}</a></li>'
+// })
+
+// $.getFeed({
+//   url: 'https://api.allorigins.win/raw?url=https://www.heise.de/rss/heise-atom.xml',
+//   success: function(feed) {
+//     alert(feed.title);
+//   }
+// });
 
 
+  function fetchData() {
+    return fetch('quotes.txt')
+            .then(response =>
+                response.text().then(text => text.split(/\n/)));
+}
 
-// function get_feed(id,FEED_URL){
-
-//   $.get(FEED_URL, function (data) {
-//     $(data).find("item").each(function () { // or "item" or whatever suits your feed
-//         var el = $(this);
-//         console.log(el.find("title").text()+":"+el.find("link").text());
-//           $('#' + id).append( "<p><a href="+el.find("link").text() + ">"+  el.find("title").text().substr(0,100)  +"</a></p>" );
-  
-//     });
-//   });
-// }
-
-// get_feed(id,FEED_URL);
-// FEED_URL = 'https://api.allorigins.win/raw?url=https://hnrss.org/newest?points=5';
-// id = 'hnrss_post';
-// x=0;
-// get_feed(id,FEED_URL);
-
-// var fs = require("fs");
-// var text = fs.readFileSync("../fortune.txt");
-// var textByLine = text.split("\n")
-
-$("#fefe_post").rss("https://yacdn.org/proxy/https://blog.fefe.de/rss.xml", {
-    limit: 3,
-    layoutTemplate: '<ul class="inline">{entries}</ul>',
-    entryTemplate: '<li><a href="{url}">[{author}] {title}</a></li>'
-})
-
-$("#hnrss_post").rss("https://api.allorigins.win/raw?url=https://hnrss.org/newest?points=5", {
-    limit: 3,
-    layoutTemplate: '<ul>{entries}</ul>',
-    entryTemplate: '<li><a href="{url}">[{author}] {title}</a></li>'
-})
-
-$.getFeed({
-  url: 'https://api.allorigins.win/raw?url=https://www.heise.de/rss/heise-atom.xml',
-  success: function(feed) {
-    alert(feed.title);
-  }
-});
+fetchData().then(arr => console.log(random_item(arr)));
