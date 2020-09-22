@@ -21,8 +21,8 @@
     font-size: 12px;
     Opacity: .5;
     margin: 0 auto;
-    margin-top: 30%;
-    margin-left: 60%;
+    margin-top: 10%;
+    margin-right: 60%;
     position: absolute;
 }
 
@@ -42,12 +42,10 @@
   color: #fff;
   font-size: 12px;
   Opacity: .5;
-  margin: 0 auto;
-  margin-top: 454px;
-  margin-left: 100px;
-  text-align:center;
+  margin-top: 30%;
+  margin-left: 40%;
+  min-width: 100%;
   position: absolute;
-  width:25em;
 }
 
 .heise-content {

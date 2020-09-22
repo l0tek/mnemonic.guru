@@ -100,4 +100,4 @@ $(window).bind('resize', function(e)
                 response.text().then(text => text.split(/\n/)));
 }
 
-fetchData().then(arr => console.log(random_item(arr)));
+fetchData().then(arr => $( ".fefe-content" ).append('<h5>' + random_item(arr).replace('|','<br>')+'</h5>'));
