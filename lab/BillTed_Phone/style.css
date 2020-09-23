@@ -1,0 +1,149 @@
+body {
+  margin: 0;
+  width: 100vw;
+  height: 100vh;
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+          justify-content: center;
+  background-color: rgba(26, 26, 26, 0.2);
+}
+
+canvas {
+  position: absolute;
+  left: 0;
+  height: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #000;
+}
+
+#c2 {
+  opacity: 0.5;
+}
+
+#keypad {
+  display: grid;
+  grid-template-columns: 100px 100px 100px;
+  grid-template-rows: 100px 100px 100px 100px;
+  padding: 0px;
+  background-position: 0 -4px;
+  -webkit-perspective: 800px;
+          perspective: 800px;
+  background-image: url("https://assets.codepen.io/86186/keypad");
+  background-size: 300px 408px;
+}
+#keypad .key {
+  background-color: transparent;
+  box-sizing: border-box;
+  position: relative;
+  -webkit-perspective: 800px;
+          perspective: 800px;
+  padding: 0;
+  border: none;
+}
+#keypad .key .inner {
+  background-image: url("https://assets.codepen.io/86186/keypad");
+  background-size: 300px 408px;
+  width: 64px;
+  height: 61px;
+  position: absolute;
+  top: 21px;
+  left: 18px;
+}
+#keypad .key.key-1 .inner {
+  background-position: -17px -28px;
+}
+#keypad .key.key-2 .inner {
+  background-position: -117px -28px;
+}
+#keypad .key.key-3 .inner {
+  background-position: -217px -28px;
+}
+#keypad .key.key-4 .inner {
+  background-position: -17px -128px;
+}
+#keypad .key.key-5 .inner {
+  background-position: -117px -128px;
+}
+#keypad .key.key-6 .inner {
+  background-position: -217px -128px;
+}
+#keypad .key.key-7 .inner {
+  background-position: -17px -228px;
+}
+#keypad .key.key-8 .inner {
+  background-position: -117px -228px;
+}
+#keypad .key.key-9 .inner {
+  background-position: -217px -228px;
+}
+#keypad .key.key-10 .inner {
+  background-position: -17px -328px;
+}
+#keypad .key.key-10 .inner::after {
+  position: absolute;
+  border-radius: 5px;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 214, 0, 0.5);
+  content: "";
+  -webkit-animation: flash 500ms ease 0ms forwards infinite;
+          animation: flash 500ms ease 0ms forwards infinite;
+}
+#keypad .key.key-0 .inner {
+  background-position: -117px -328px;
+}
+#keypad .key.key-12 .inner {
+  background-position: -217px -328px;
+}
+#keypad .key.key-12 .inner::after {
+  position: absolute;
+  border-radius: 5px;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 214, 0, 0.5);
+  content: "";
+  -webkit-animation: flash 500ms ease 0ms forwards infinite;
+          animation: flash 500ms ease 0ms forwards infinite;
+}
+#keypad .key:active, #keypad .key.active {
+  -webkit-transform-style: preserve-3d;
+          transform-style: preserve-3d;
+  -webkit-transform: scale(0.96);
+          transform: scale(0.96);
+}
+#keypad .key:active .inner::after, #keypad .key.active .inner::after {
+  position: absolute;
+  border-radius: 5px;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 214, 0, 0.5);
+  content: "";
+}
+
+@-webkit-keyframes flash {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes flash {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
