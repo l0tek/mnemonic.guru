@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="css/bootstrap.min.css"  crossorigin="anonymous">
+    <link rel="stylesheet" href="css/main.css?v=wekjsreeöksadoerjh"  crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ekko-lightbox/5.3.0/ekko-lightbox.css">
+
+    <title>mnemonic.guru</title>
+  </head>
+  <body>
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">mnemonic.guru</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+      <div class="collapse navbar-collapse" id="navbarResponsive">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item active">
+            <a class="nav-link" href="index.html">Home
+                  <span class="sr-only">(current)</span>
+                </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="gallery.html">Gallery</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Lab
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <a class="dropdown-item" href="lab/BillTed_Phone/index.html">Bill & Ted's Phone</a>
+              <a class="dropdown-item" href="lab/jquery_isotop/index.html">JQuery Isotope</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="#">Something else here</a>
+            </div>
+          </li>      
+         </ul>
+        <ul class="navbar-nav flex-row">
+          <li class="nav-item"><a class="nav-link px-2" href="https://www.facebook.com/l0tek"><span class="fa fa-facebook"></span></a></li>
+          <li class="nav-item"><a class="nav-link px-2" href="https://twitter.com/l0tek23"><span class="fa fa-twitter"></span></a></li>
+          <li class="nav-item"><a class="nav-link px-2" href="#"><span class="fa fa-github"></span></a></li>
+      </ul>        
+      </div>
+    </div>
+  </nav>
+
+  <div class="row justify-content-center" style="padding-top:160px;">
+    <div class="col-md-8">
+        <div id="gallery" class="row">
+            <a href="img/fractals/Starborn.png" data-toggle="lightbox" data-gallery="example-gallery" class="col-sm-4" data-title="Starborn" data-footer="<a href=img/fractals/Starborn.png>Fullsize</a>">
+                <img src="img/fractals/starborn_tn.png" class="img-fluid">
+            </a>
+            <a href="img/fractals/symmetry.png" data-toggle="lightbox" data-gallery="example-gallery" class="col-sm-4" data-title="Symmetry" data-footer="<a href=img/fractals/symmetry.png>Fullsize</a>">
+                <img src="img/fractals/symmetry_tn.png" class="img-fluid">
+            <a href="img/fractals/inside_out.png" data-toggle="lightbox" data-gallery="example-gallery" class="col-sm-4" data-title="Inside Out" data-footer="<a href=img/fractals/inside_out.png>Fullsize</a>">
+                <img src="img/fractals/inside_out_tn.png" class="img-fluid">
+            </a>
+        </div>
+        <div class="row" style="padding-top:25px">
+            <a href="img/fractals/lightning_sprite.png" data-toggle="lightbox" data-gallery="example-gallery" class="col-sm-4" data-title="Lighting Strike" data-footer="<a href=img/fractals/lightning_sprite.png>Fullsize</a>">
+                <img src="img/fractals/lightning_sprite_tn.png" class="img-fluid">
+            </a>
+            <a href="img/fractals/flux.png" data-toggle="lightbox" data-gallery="example-gallery" class="col-sm-4" data-title="Flux" data-footer="<a href=img/fractals/flux.png>Fullsize</a>">
+                <img src="img/fractals/flux_tn.png" class="img-fluid">
+            </a>
+            <a href="img/fractals/Lower_Your_Eyelids_To_Die_With_The_Sun.png" data-toggle="lightbox" data-gallery="example-gallery" class="col-sm-4" data-title="Lower Your Eyelids To Die With The Sun" data-footer="<a href=img/fractals/Lower_Your_Eyelids_To_Die_With_The_Sun.png>Fullsize</a>">
+                <img src="img/fractals/Lower_Your_Eyelids_To_Die_With_The_Sun_tn.png" class="img-fluid">
+            </a>
+        </div>
+    </div>
+</div>   
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+
+    <script src="js/jquery-3.1.1.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-rss/3.3.0/jquery.rss.min.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ekko-lightbox/5.3.0/ekko-lightbox.min.js"></script>
+    <script>
+
+
+      var folder = "img/fractals/";
+      var folder_tn = "img/fractals/tn/"
+      $.ajax({
+          url : folder,
+          success: function (data) {
+              $(data).find("a").attr("href", function (i, val) {
+                  if( val.match(/\.(jpe?g|png|gif)$/) ) { 
+                      $("#gallery").append( "<a href='"+ folder + val +"' data-toggle='lightbox' data-gallery='example-gallery' class='col-sm-4' data-title='Lighting Strike'><img src='"+ folder_tn  + val +"' class='img-fluid'></a>" );
+                  } 
+              });
+          }
+      });
+
+
+
+      $(document).on('click', '[data-toggle="lightbox"]', function(event) {
+              event.preventDefault();
+              $(this).ekkoLightbox();
+            });	
+    </script>    
+  </body>
+</html>
