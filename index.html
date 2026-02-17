@@ -3,12 +3,12 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Bootstrap + Sass</title>
+        <title>mnemonic.guru</title>
     </head>
     <body>
         <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
             <div class="container">
-                <a class="navbar-brand" href="#">Deine Seite</a>
+                <a class="navbar-brand" href="#">mnemonic.guru</a>
                 <button
                     class="navbar-toggler"
                     type="button"
@@ -26,11 +26,16 @@
                                 type="button"
                                 aria-label="Zu Darkmode wechseln"
                             >
-                                <span class="theme-icon" aria-hidden="true">&#127769;</span>
+                                <span class="theme-icon" aria-hidden="true"
+                                    >&#127769;</span
+                                >
                             </button>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/gallery.html">Gallery</a>
                         </li>
                         <li class="nav-item">
                             <a class="btn btn-primary" href="#">CTA</a>
@@ -41,13 +46,24 @@
         </nav>
 
         <main class="hero position-relative min-vh-100 overflow-hidden">
-            <canvas id="spiders" class="hero-canvas" aria-hidden="true"></canvas>
+            <canvas
+                id="thinker-wireframe"
+                class="hero-model-canvas"
+                aria-hidden="true"
+            ></canvas>
+            <canvas
+                id="spiders"
+                class="hero-canvas"
+                aria-hidden="true"
+            ></canvas>
             <div class="hero-bg" aria-hidden="true"></div>
             <div
                 class="container position-relative d-flex min-vh-100 align-items-center"
             >
                 <div class="hero-content p-4 p-md-5 rounded-4 border">
-                    <p class="text-uppercase text-body-secondary fw-semibold mb-2">
+                    <p
+                        class="text-uppercase text-body-secondary fw-semibold mb-2"
+                    >
                         Interaktive Landingpage
                     </p>
                     <h1 class="display-4 fw-bold mb-3">
@@ -58,8 +74,12 @@
                         Punkte permanent im Raum.
                     </p>
                     <div class="d-flex gap-2 flex-wrap">
-                        <a class="btn btn-primary btn-lg" href="#">Jetzt starten</a>
-                        <a class="btn btn-outline-light btn-lg" href="#">Mehr erfahren</a>
+                        <a class="btn btn-primary btn-lg" href="#"
+                            >Jetzt starten</a
+                        >
+                        <a class="btn btn-outline-light btn-lg" href="#"
+                            >Mehr erfahren</a
+                        >
                     </div>
                 </div>
             </div>

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="de" data-bs-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>mnemonic.guru - Gallery</title>
+  </head>
+  <body class="gallery-page">
+    <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
+      <div class="container">
+        <a class="navbar-brand" href="/index.html">mnemonic.guru</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#nav"
+          aria-controls="nav"
+          aria-expanded="false"
+          aria-label="Navigation umschalten"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div id="nav" class="collapse navbar-collapse">
+          <ul class="navbar-nav ms-auto gap-2 align-items-lg-center">
+            <li class="nav-item">
+              <button
+                id="theme-toggle"
+                class="btn btn-outline-secondary theme-toggle"
+                type="button"
+                aria-label="Zu Darkmode wechseln"
+              >
+                <span class="theme-icon" aria-hidden="true">&#127769;</span>
+              </button>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/index.html">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="/gallery.html"
+                >Gallery</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container py-5">
+      <header class="mb-4">
+        <p class="text-uppercase text-body-secondary fw-semibold mb-1">
+          Fractal Collection
+        </p>
+        <h1 class="display-6 fw-bold mb-2">Gallery</h1>
+        <p class="text-body-secondary mb-0">
+          Dynamisch geladen aus der mnemonic.guru API.
+        </p>
+      </header>
+
+      <div id="gallery-status" class="text-body-secondary mb-3">Lade Bilder...</div>
+      <div id="gallery-grid" class="gallery-grid" aria-live="polite"></div>
+    </main>
+
+    <div
+      id="blueimp-gallery"
+      class="blueimp-gallery"
+      aria-label="image gallery"
+      aria-modal="true"
+      role="dialog"
+    >
+      <div class="slides" aria-live="polite"></div>
+      <h3 class="title"></h3>
+      <a
+        class="prev"
+        aria-controls="blueimp-gallery"
+        aria-label="previous slide"
+        aria-keyshortcuts="ArrowLeft"
+      ></a>
+      <a
+        class="next"
+        aria-controls="blueimp-gallery"
+        aria-label="next slide"
+        aria-keyshortcuts="ArrowRight"
+      ></a>
+      <a
+        class="close"
+        aria-controls="blueimp-gallery"
+        aria-label="close"
+        aria-keyshortcuts="Escape"
+      ></a>
+      <a
+        class="play-pause"
+        aria-controls="blueimp-gallery"
+        aria-label="play slideshow"
+        aria-keyshortcuts="Space"
+        aria-pressed="false"
+        role="button"
+      ></a>
+      <ol class="indicator"></ol>
+    </div>
+
+    <script type="module" src="/src/gallery.js"></script>
+  </body>
+</html>
