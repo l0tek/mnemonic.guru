@@ -126,6 +126,42 @@ if (isset($_GET["digital"])) {
     $path = "../img/fotos";
 }
 
+if (isset($_GET["latest"])) {
+    $dirArray = [];
+    $myDirectory = @opendir($path);
+    if ($myDirectory !== false) {
+        while (($entryName = readdir($myDirectory)) !== false) {
+            if ($entryName === "." || $entryName === "..") {
+                continue;
+            }
+            $fullPath = $path . "/" . $entryName;
+            if (!is_file($fullPath)) {
+                continue;
+            }
+            if (!preg_match("/\.(jpg|jpeg|png|gif|webp)$/i", $entryName)) {
+                continue;
+            }
+            $dirArray[] = [
+                "name" => $entryName,
+                "mtime" => @filemtime($fullPath) ?: 0
+            ];
+        }
+        closedir($myDirectory);
+    }
+
+    usort($dirArray, function ($a, $b) {
+        return $b["mtime"] <=> $a["mtime"];
+    });
+
+    $sortedNames = array_map(function ($entry) {
+        return $entry["name"];
+    }, $dirArray);
+
+    echo json_encode($sortedNames);
+    exit;
+}
+
+// Legacy-Listing wie vorher (alphabetisch, inkl. Verzeichnis-Eintraege)
 $dirArray = [];
 $myDirectory = @opendir($path);
 if ($myDirectory !== false) {

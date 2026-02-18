@@ -332,3 +332,81 @@ if (canvas) {
   addListeners();
   animate();
 }
+
+const latestWorksGrid = document.getElementById("latest-works-grid");
+const API_URL = "https://www.mnemonic.guru/api/index.php";
+const IMAGE_PATTERN = /\.(jpg|jpeg|png|gif|webp)$/i;
+const teaserCategories = [
+  {
+    label: "Fractals",
+    requestUrl: `${API_URL}?latest=1`,
+    imageBase: "https://mnemonic.guru/img/fractals/",
+    pageUrl: "/fraktale.html",
+  },
+  {
+    label: "Digital",
+    requestUrl: `${API_URL}?digital=1&latest=1`,
+    imageBase: "https://mnemonic.guru/img/digital/",
+    pageUrl: "/digitalart.html",
+  },
+  {
+    label: "Fotos",
+    requestUrl: `${API_URL}?fotos=1&latest=1`,
+    imageBase: "https://mnemonic.guru/img/fotos/",
+    pageUrl: "/fotos.html",
+  },
+];
+
+const renderLatestCard = (category, fileName) => {
+  if (!latestWorksGrid) {
+    return;
+  }
+  const card = document.createElement("article");
+  card.className = "latest-work-card";
+
+  const link = document.createElement("a");
+  link.href = category.pageUrl;
+  link.className = "latest-work-link";
+
+  if (fileName) {
+    const image = document.createElement("img");
+    image.className = "latest-work-image";
+    image.src = `${category.imageBase}${encodeURIComponent(fileName)}`;
+    image.alt = `${category.label} - ${fileName}`;
+    image.loading = "lazy";
+    link.appendChild(image);
+  }
+
+  const meta = document.createElement("div");
+  meta.className = "latest-work-meta";
+  meta.innerHTML = `<span>${category.label}</span><strong>${fileName || "Keine Bilder"}</strong>`;
+
+  link.appendChild(meta);
+  card.appendChild(link);
+  latestWorksGrid.appendChild(card);
+};
+
+const loadLatestWorks = async () => {
+  if (!latestWorksGrid) {
+    return;
+  }
+  latestWorksGrid.innerHTML = "";
+  for (let i = 0; i < teaserCategories.length; i += 1) {
+    const category = teaserCategories[i];
+    try {
+      const response = await fetch(category.requestUrl, { cache: "no-store" });
+      const json = await response.json();
+      if (!Array.isArray(json)) {
+        renderLatestCard(category, "");
+        continue;
+      }
+      const fileName = json.find((entry) => IMAGE_PATTERN.test(entry)) || "";
+      renderLatestCard(category, fileName);
+    } catch (error) {
+      console.error(`Latest works failed (${category.label}):`, error);
+      renderLatestCard(category, "");
+    }
+  }
+};
+
+loadLatestWorks();
