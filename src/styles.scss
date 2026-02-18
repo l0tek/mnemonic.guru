@@ -36,6 +36,43 @@ body {
         color 0.2s ease;
 }
 
+body.is-loading > :not(#page-loader) {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.page-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    background: linear-gradient(135deg, #05070f 0%, #0d1224 45%, #101a2b 100%);
+    color: #f8fafc;
+    transition:
+        opacity 0.3s ease,
+        visibility 0.3s ease;
+}
+
+[data-bs-theme="light"] .page-loader {
+    background: linear-gradient(135deg, #e8eef9 0%, #f7f9fe 55%, #ffffff 100%);
+    color: #0f172a;
+}
+
+.page-loader.is-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.page-loader-text {
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+}
+
 .navbar {
     position: absolute;
     inset: 0 0 auto 0;
@@ -143,6 +180,62 @@ body {
     gap: 1rem;
 }
 
+.gallery-hero-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.gallery-hero-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(8, 13, 26, 0.58);
+    min-height: 340px;
+    display: flex;
+    flex-direction: column;
+}
+
+[data-bs-theme="light"] .gallery-hero-card {
+    background: rgba(255, 255, 255, 0.76);
+    border-color: rgba(15, 23, 42, 0.12);
+}
+
+.gallery-hero-media {
+    position: relative;
+    height: 190px;
+    background: linear-gradient(135deg, #10214a 0%, #1a3b6b 45%, #0a172f 100%);
+}
+
+.gallery-hero-media.is-empty {
+    background: linear-gradient(135deg, #0f253f 0%, #1b3154 48%, #24385e 100%);
+}
+
+.gallery-hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.gallery-hero-content {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    flex: 1;
+}
+
+.gallery-section + .gallery-section {
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-bs-theme="light"] .gallery-section + .gallery-section {
+    border-top-color: rgba(15, 23, 42, 0.12);
+}
+
 .gallery-card {
     overflow: hidden;
     border-radius: 0.9rem;
@@ -165,4 +258,64 @@ body {
 
 .gallery-card:hover .gallery-thumb {
     transform: scale(1.03);
+}
+
+@media (max-width: 991.98px) {
+    .gallery-hero-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.admin-page {
+    min-height: 100vh;
+    background:
+        radial-gradient(
+            circle at 14% 18%,
+            rgba(0, 183, 255, 0.14),
+            transparent 40%
+        ),
+        radial-gradient(
+            circle at 86% 82%,
+            rgba(120, 78, 255, 0.12),
+            transparent 42%
+        ),
+        linear-gradient(135deg, #060a15 0%, #0e1528 48%, #121d30 100%);
+}
+
+[data-bs-theme="light"] .admin-page {
+    background:
+        radial-gradient(
+            circle at 10% 14%,
+            rgba(59, 130, 246, 0.16),
+            transparent 38%
+        ),
+        radial-gradient(
+            circle at 88% 84%,
+            rgba(14, 165, 233, 0.13),
+            transparent 42%
+        ),
+        linear-gradient(135deg, #edf3ff 0%, #f6f9ff 55%, #ffffff 100%);
+}
+
+.admin-shell {
+    max-width: 560px;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    background: rgba(7, 12, 25, 0.58);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(8px);
+}
+
+[data-bs-theme="light"] .admin-shell {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(15, 23, 42, 0.1);
+}
+
+.admin-login-form .form-control {
+    min-height: 2.75rem;
+}
+
+.admin-upload-form .form-control,
+.admin-upload-form .form-select {
+    min-height: 2.75rem;
 }

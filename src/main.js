@@ -3,6 +3,23 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import * as THREE from "three";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 
+const pageLoader = document.getElementById("page-loader");
+
+const revealPage = () => {
+  document.body.classList.remove("is-loading");
+  if (pageLoader) {
+    pageLoader.classList.add("is-hidden");
+    pageLoader.setAttribute("aria-hidden", "true");
+  }
+};
+
+document.body.classList.add("is-loading");
+if (document.readyState === "complete") {
+  window.requestAnimationFrame(revealPage);
+} else {
+  window.addEventListener("load", revealPage, { once: true });
+}
+
 const STORAGE_KEY = "theme-preference";
 const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
 const themeToggleButton = document.getElementById("theme-toggle");

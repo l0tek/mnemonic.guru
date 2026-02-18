@@ -8,6 +8,10 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, "index.html"),
         gallery: resolve(__dirname, "gallery.html"),
+        fraktale: resolve(__dirname, "fraktale.html"),
+        digitalart: resolve(__dirname, "digitalart.html"),
+        fotos: resolve(__dirname, "fotos.html"),
+        admin: resolve(__dirname, "4meo/index.html"),
       },
     },
   },

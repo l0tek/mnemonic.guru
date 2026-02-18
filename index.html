@@ -6,6 +6,15 @@
         <title>mnemonic.guru</title>
     </head>
     <body>
+        <div
+            id="page-loader"
+            class="page-loader"
+            role="status"
+            aria-live="polite"
+        >
+            <div class="spinner-border text-light" aria-hidden="true"></div>
+            <span class="page-loader-text">Seite wird geladen ...</span>
+        </div>
         <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
             <div class="container">
                 <a class="navbar-brand" href="#">mnemonic.guru</a>
@@ -34,8 +43,36 @@
                         <li class="nav-item">
                             <a class="nav-link" href="#">Home</a>
                         </li>
-                        <li class="nav-item">
+                        <li class="nav-item dropdown d-flex align-items-center">
                             <a class="nav-link" href="/gallery.html">Gallery</a>
+                            <button
+                                class="btn btn-link nav-link dropdown-toggle px-2"
+                                type="button"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                                aria-label="Gallery Untermenue"
+                            ></button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a
+                                        class="dropdown-item"
+                                        href="/fraktale.html"
+                                        >Fraktale</a
+                                    >
+                                </li>
+                                <li>
+                                    <a
+                                        class="dropdown-item"
+                                        href="/digitalart.html"
+                                        >Digital Art</a
+                                    >
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/fotos.html"
+                                        >Fotos</a
+                                    >
+                                </li>
+                            </ul>
                         </li>
                         <li class="nav-item">
                             <a class="btn btn-primary" href="#">CTA</a>
@@ -64,14 +101,15 @@
                     <p
                         class="text-uppercase text-body-secondary fw-semibold mb-2"
                     >
-                        Interaktive Landingpage
+                        Ideen mit Strom
                     </p>
                     <h1 class="display-4 fw-bold mb-3">
-                        Fullscreen Hero mit lebendigem Netzwerk-Hintergrund
+                        Mein digitales Atelier fuer Code, Skizzen und verrueckte
+                        Einfaelle.
                     </h1>
                     <p class="lead text-body-secondary mb-4">
-                        Der Hintergrund reagiert auf Mausbewegung und bewegt die
-                        Punkte permanent im Raum.
+                        Hier wird gebaut, verworfen, neu gedacht und manchmal
+                        etwas wirklich Gutes gefunden.
                     </p>
                     <div class="d-flex gap-2 flex-wrap">
                         <a class="btn btn-primary btn-lg" href="#"

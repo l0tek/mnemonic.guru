@@ -3,9 +3,12 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>mnemonic.guru - Gallery</title>
+        <title>mnemonic.guru - Digital Art</title>
     </head>
-    <body class="gallery-page">
+    <body
+        class="gallery-page subgallery-page"
+        data-gallery-category="digitalart"
+    >
         <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
             <div class="container">
                 <a class="navbar-brand" href="/index.html">mnemonic.guru</a>
@@ -38,12 +41,7 @@
                             <a class="nav-link" href="/index.html">Home</a>
                         </li>
                         <li class="nav-item dropdown d-flex align-items-center">
-                            <a
-                                class="nav-link active"
-                                aria-current="page"
-                                href="/gallery.html"
-                                >Gallery</a
-                            >
+                            <a class="nav-link" href="/gallery.html">Gallery</a>
                             <button
                                 class="btn btn-link nav-link dropdown-toggle px-2"
                                 type="button"
@@ -61,7 +59,8 @@
                                 </li>
                                 <li>
                                     <a
-                                        class="dropdown-item"
+                                        class="dropdown-item active"
+                                        aria-current="page"
                                         href="/digitalart.html"
                                         >Digital Art</a
                                     >
@@ -81,17 +80,58 @@
         <main class="container py-5">
             <header class="mb-4">
                 <p class="text-uppercase text-body-secondary fw-semibold mb-1">
-                    Curated Collection
+                    Sektion
                 </p>
-                <h1 class="display-6 fw-bold mb-2">Gallery Uebersicht</h1>
-                <p class="text-body-secondary mb-0">
-                    Drei Bereiche mit direkten Einstiegen in die Untergalerien.
+                <h1 id="subgallery-title" class="display-6 fw-bold mb-2">
+                    Digital Art
+                </h1>
+                <p id="subgallery-description" class="text-body-secondary mb-0">
+                    Kuratierte digitale Arbeiten.
                 </p>
             </header>
 
-            <section id="gallery-hero-grid" class="gallery-hero-grid"></section>
+            <div id="subgallery-status" class="text-body-secondary mb-3">
+                Lade Bilder...
+            </div>
+            <div
+                id="subgallery-grid"
+                class="gallery-grid"
+                aria-live="polite"
+            ></div>
         </main>
 
-        <script type="module" src="/src/gallery.js"></script>
+        <div
+            id="blueimp-gallery"
+            class="blueimp-gallery"
+            aria-label="image gallery"
+            aria-modal="true"
+            role="dialog"
+        >
+            <div class="slides" aria-live="polite"></div>
+            <h3 class="title"></h3>
+            <a
+                class="prev"
+                aria-controls="blueimp-gallery"
+                aria-label="previous slide"
+            ></a>
+            <a
+                class="next"
+                aria-controls="blueimp-gallery"
+                aria-label="next slide"
+            ></a>
+            <a
+                class="close"
+                aria-controls="blueimp-gallery"
+                aria-label="close"
+            ></a>
+            <a
+                class="play-pause"
+                aria-controls="blueimp-gallery"
+                aria-label="play slideshow"
+            ></a>
+            <ol class="indicator"></ol>
+        </div>
+
+        <script type="module" src="/src/subgallery.js"></script>
     </body>
 </html>

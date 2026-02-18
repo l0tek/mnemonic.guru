@@ -1,20 +1,40 @@
 import "./styles.scss";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
-import "blueimp-gallery/js/blueimp-helper.js";
-import "blueimp-gallery/js/blueimp-gallery.js";
-import "blueimp-gallery/css/blueimp-gallery.min.css";
 
 const STORAGE_KEY = "theme-preference";
+const API_URL = "https://www.mnemonic.guru/api/index.php";
+const IMAGE_PATTERN = /\.(jpg|jpeg|png|gif|webp)$/i;
 const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
 const themeToggleButton = document.getElementById("theme-toggle");
-const galleryGrid = document.getElementById("gallery-grid");
-const galleryStatus = document.getElementById("gallery-status");
+const heroGrid = document.getElementById("gallery-hero-grid");
 
-const API_URL = "https://www.mnemonic.guru/api/index.php";
-const IMAGE_BASE = "https://www.mnemonic.guru/img/fractals/";
-const THUMB_BASE = "https://www.mnemonic.guru/img/fractals/tn/";
-const IMAGE_PATTERN = /\.(jpg|jpeg|png|gif)$/i;
-const openBlueimpGallery = window.blueimp?.Gallery;
+const categories = [
+  {
+    key: "fraktale",
+    title: "Fraktale",
+    text: "Generative Muster, Tiefe und Strukturen.",
+    pageUrl: "/fraktale.html",
+    requestUrl: API_URL,
+    imageBase: "https://mnemonic.guru/img/fractals/",
+    thumbBase: "https://mnemonic.guru/img/fractals/tn/",
+  },
+  {
+    key: "digitalart",
+    title: "Digital Art",
+    text: "Digitale Kompositionen und visuelle Experimente.",
+    pageUrl: "/digitalart.html",
+    requestUrl: `${API_URL}?digital=1`,
+    imageBase: "https://mnemonic.guru/img/digital/",
+  },
+  {
+    key: "fotos",
+    title: "Fotos",
+    text: "Fotografien und visuelle Momentaufnahmen.",
+    pageUrl: "/fotos.html",
+    requestUrl: `${API_URL}?fotos=1`,
+    imageBase: "https://mnemonic.guru/img/fotos/",
+  },
+];
 
 const getPreferredTheme = () => {
   const storedTheme = localStorage.getItem(STORAGE_KEY);
@@ -36,65 +56,13 @@ const applyTheme = (theme) => {
   }
 };
 
-const renderImages = (files) => {
-  if (!galleryGrid || !galleryStatus) {
-    return;
-  }
-  galleryGrid.innerHTML = "";
-  const imageFiles = files.filter((name) => IMAGE_PATTERN.test(name));
-
-  if (!imageFiles.length) {
-    galleryStatus.textContent = "Keine Bilder gefunden.";
-    return;
-  }
-
-  galleryStatus.textContent = `${imageFiles.length} Bilder geladen`;
-  imageFiles.forEach((fileName) => {
-    const card = document.createElement("article");
-    card.className = "gallery-card card border-0";
-
-    const anchor = document.createElement("a");
-    anchor.href = `${IMAGE_BASE}${fileName}`;
-    anchor.dataset.gallery = "fractals";
-    anchor.title = fileName;
-
-    const image = document.createElement("img");
-    image.src = `${THUMB_BASE}${fileName}`;
-    image.alt = fileName;
-    image.loading = "lazy";
-    image.className = "card-img-top gallery-thumb";
-
-    anchor.appendChild(image);
-    card.appendChild(anchor);
-    galleryGrid.appendChild(card);
-  });
+const buildAssetUrl = (base, fileName) => {
+  return `${base}${encodeURIComponent(fileName)}`;
 };
 
-const initGalleryLightbox = () => {
-  if (!galleryGrid) {
-    return;
-  }
-  galleryGrid.addEventListener("click", (event) => {
-    const link = event.target.closest("a[data-gallery='fractals']");
-    if (!link) {
-      return;
-    }
-    event.preventDefault();
-    const links = Array.from(
-      galleryGrid.querySelectorAll("a[data-gallery='fractals']"),
-    );
-    if (typeof openBlueimpGallery === "function") {
-      openBlueimpGallery(links, { index: link, event });
-    }
-  });
-};
-
-const loadGallery = async () => {
-  if (!galleryStatus) {
-    return;
-  }
+const loadCategoryImages = async (category) => {
   try {
-    const response = await fetch(API_URL, { cache: "no-store" });
+    const response = await fetch(category.requestUrl, { cache: "no-store" });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
@@ -102,10 +70,64 @@ const loadGallery = async () => {
     if (!Array.isArray(json)) {
       throw new Error("Unexpected API payload");
     }
-    renderImages(json);
+    return json.filter((name) => IMAGE_PATTERN.test(name));
   } catch (error) {
-    galleryStatus.textContent = "Bilder konnten nicht geladen werden.";
-    console.error("Gallery load failed:", error);
+    console.error(`Gallery hub load failed (${category.key}):`, error);
+  }
+  return [];
+};
+
+const createHeroCard = (category, imageName) => {
+  const card = document.createElement("article");
+  card.className = "gallery-hero-card";
+
+  const media = document.createElement("div");
+  media.className = "gallery-hero-media";
+
+  if (imageName) {
+    const image = document.createElement("img");
+    image.className = "gallery-hero-image";
+    image.loading = "lazy";
+    image.alt = `${category.title} Preview`;
+    image.src = category.thumbBase
+      ? buildAssetUrl(category.thumbBase, imageName)
+      : buildAssetUrl(category.imageBase, imageName);
+    media.appendChild(image);
+  } else {
+    media.classList.add("is-empty");
+  }
+
+  const content = document.createElement("div");
+  content.className = "gallery-hero-content";
+
+  const title = document.createElement("h2");
+  title.className = "h3 fw-bold mb-2";
+  title.textContent = category.title;
+
+  const text = document.createElement("p");
+  text.className = "text-body-secondary mb-3";
+  text.textContent = category.text;
+
+  const button = document.createElement("a");
+  button.href = category.pageUrl;
+  button.className = "btn btn-primary";
+  button.textContent = "Zur Untergalerie";
+
+  content.append(title, text, button);
+  card.append(media, content);
+  return card;
+};
+
+const renderHub = async () => {
+  if (!heroGrid) {
+    return;
+  }
+  heroGrid.innerHTML = "";
+  for (let i = 0; i < categories.length; i += 1) {
+    const category = categories[i];
+    const images = await loadCategoryImages(category);
+    const preview = images.length ? images[0] : "";
+    heroGrid.appendChild(createHeroCard(category, preview));
   }
 };
 
@@ -127,5 +149,4 @@ prefersDark.addEventListener("change", (event) => {
   }
 });
 
-initGalleryLightbox();
-loadGallery();
+renderHub();
