@@ -3,10 +3,10 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>mnemonic.guru - Admin</title>
+        <title>mnemonic.guru - Admin Dashboard</title>
     </head>
     <body class="admin-page">
-        <main class="container py-5">
+        <main class="container-fluid py-5 px-3 px-lg-4">
             <section class="admin-shell mx-auto">
                 <div
                     class="d-flex justify-content-between align-items-center mb-4"
@@ -57,60 +57,25 @@
                     <div class="alert alert-success mb-4" role="status">
                         Zugriff freigegeben.
                     </div>
-                    <div class="card border-0 shadow-sm mb-3">
+
+                    <nav class="admin-menu nav nav-pills mb-4">
+                        <a
+                            class="nav-link active"
+                            aria-current="page"
+                            href="/4meo/index.html"
+                            >Dashboard</a
+                        >
+                        <a class="nav-link" href="/4meo/upload.html"
+                            >Bilder Upload</a
+                        >
+                        <a class="nav-link" href="/4meo/editor.html"
+                            >Seiten Editor</a
+                        >
+                    </nav>
+
+                    <div class="card border-0 shadow-sm">
                         <div class="card-body">
-                            <h2 class="h5 mb-3">Admin Dashboard</h2>
-                            <form
-                                id="admin-upload-form"
-                                class="admin-upload-form"
-                            >
-                                <div class="mb-3">
-                                    <label
-                                        class="form-label"
-                                        for="upload-category"
-                                        >Kategorie</label
-                                    >
-                                    <select
-                                        id="upload-category"
-                                        class="form-select"
-                                        name="imgtyp"
-                                        required
-                                    >
-                                        <option value="fraktale">
-                                            Fraktale
-                                        </option>
-                                        <option value="digital">
-                                            Digital Art
-                                        </option>
-                                        <option value="fotos">Fotos</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label" for="upload-image"
-                                        >Bild</label
-                                    >
-                                    <input
-                                        id="upload-image"
-                                        class="form-control"
-                                        type="file"
-                                        name="image"
-                                        accept="image/jpeg,image/png,image/webp"
-                                        required
-                                    />
-                                </div>
-                                <button
-                                    class="btn btn-primary w-100"
-                                    type="submit"
-                                >
-                                    Bild hochladen
-                                </button>
-                            </form>
-                            <p
-                                id="admin-upload-status"
-                                class="small text-body-secondary mt-3 mb-0"
-                            >
-                                Waehle Kategorie und Bild fuer den Upload.
-                            </p>
+                            <h2 class="h5 mb-0">Dashboard</h2>
                         </div>
                     </div>
                 </section>

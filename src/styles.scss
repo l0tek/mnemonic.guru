@@ -397,7 +397,8 @@ body.is-loading > :not(#page-loader) {
 }
 
 .admin-shell {
-    max-width: 560px;
+    max-width: 760px;
+    width: 100%;
     padding: 1.5rem;
     border-radius: 1rem;
     background: rgba(7, 12, 25, 0.58);
@@ -405,9 +406,17 @@ body.is-loading > :not(#page-loader) {
     backdrop-filter: blur(8px);
 }
 
+.admin-shell--wide {
+    max-width: 1240px;
+}
+
 [data-bs-theme="light"] .admin-shell {
     background: rgba(255, 255, 255, 0.8);
     border-color: rgba(15, 23, 42, 0.1);
+}
+
+.admin-menu {
+    gap: 0.35rem;
 }
 
 .admin-login-form .form-control {
@@ -417,4 +426,108 @@ body.is-loading > :not(#page-loader) {
 .admin-upload-form .form-control,
 .admin-upload-form .form-select {
     min-height: 2.75rem;
+}
+
+.admin-editor .ql-toolbar.ql-snow,
+.admin-editor .ql-container.ql-snow {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.admin-editor {
+    display: flex;
+    flex-direction: column;
+    height: 18.5rem;
+    min-height: 18.5rem;
+    max-height: 18.5rem;
+    overflow: hidden;
+}
+
+.admin-editor .ql-toolbar.ql-snow {
+    display: flex;
+    flex-wrap: wrap;
+    flex: 0 0 auto;
+    gap: 0.2rem;
+    overflow-x: auto;
+}
+
+.admin-editor .ql-container {
+    flex: 1 1 auto;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: hidden;
+}
+
+.admin-editor .ql-editor {
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow-y: auto;
+}
+
+.admin-editor-form .row {
+    margin-bottom: 1rem;
+}
+
+.admin-editor-actions {
+  position: static;
+  padding-top: 0.75rem;
+  padding-bottom: 0.25rem;
+}
+
+[data-bs-theme="light"] .admin-editor .ql-toolbar.ql-snow,
+[data-bs-theme="light"] .admin-editor .ql-container.ql-snow {
+    border-color: rgba(15, 23, 42, 0.14);
+}
+
+[data-bs-theme="dark"] .admin-editor .ql-snow .ql-stroke {
+    stroke: rgba(255, 255, 255, 0.86);
+}
+
+[data-bs-theme="dark"] .admin-editor .ql-snow .ql-fill {
+    fill: rgba(255, 255, 255, 0.86);
+}
+
+[data-bs-theme="dark"] .admin-editor .ql-snow .ql-picker {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.admin-project-list {
+    max-height: 23rem;
+    overflow: auto;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 0.75rem;
+}
+
+[data-bs-theme="light"] .admin-project-list {
+    border-color: rgba(15, 23, 42, 0.14);
+}
+
+.admin-project-item {
+    border-left: 0;
+    border-right: 0;
+}
+
+.project-sections-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+}
+
+.project-section-card {
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(8, 13, 26, 0.58);
+    padding: 1rem;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+}
+
+[data-bs-theme="light"] .project-section-card {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: rgba(15, 23, 42, 0.12);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
+}
+
+.project-section-body > :last-child {
+    margin-bottom: 0;
 }

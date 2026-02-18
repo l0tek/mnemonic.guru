@@ -10,10 +10,14 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 }
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB
+$baseDir = realpath(__DIR__ . "/..");
 $typeToFolder = [
-    "fractals" => "../img/fractals",
-    "digital" => "../img/digital",
-    "fotos" => "../img/fotos",
+    "fractals" => $baseDir . "/img/fractals",
+    "digital" => $baseDir . "/img/digital",
+    "fotos" => $baseDir . "/img/fotos",
+    "raspi" => $baseDir . "/img/lab/raspi",
+    "esp32" => $baseDir . "/img/lab/esp32",
+    "code" => $baseDir . "/img/lab/code",
 ];
 $typeAliases = [
     "fractals" => "fractals",
@@ -24,9 +28,101 @@ $typeAliases = [
     "pwn" => "digital",
     "fotos" => "fotos",
     "crow" => "fotos",
+    "editor" => "code",
+    "raspi" => "raspi",
+    "esp32" => "esp32",
+    "code" => "code",
+];
+$editablePages = [
+    "raspi" => $baseDir . "/raspi.html",
+    "esp32" => $baseDir . "/esp32.html",
+    "code" => $baseDir . "/code.html",
 ];
 
+if (isset($_GET["page_content"])) {
+    $pageKey = strtolower(trim((string)($_GET["page"] ?? "")));
+    if (!isset($editablePages[$pageKey])) {
+        http_response_code(400);
+        echo json_encode(["status" => "ERR", "msg" => "ungueltige seite"]);
+        exit;
+    }
+
+    $pagePath = $editablePages[$pageKey];
+    $rawHtml = @file_get_contents($pagePath);
+    if ($rawHtml === false) {
+        http_response_code(500);
+        echo json_encode(["status" => "ERR", "msg" => "seite konnte nicht gelesen werden"]);
+        exit;
+    }
+
+    if (!preg_match("/<!--\\s*EDITABLE:START\\s*-->(.*?)<!--\\s*EDITABLE:END\\s*-->/s", $rawHtml, $matches)) {
+        http_response_code(500);
+        echo json_encode(["status" => "ERR", "msg" => "editierbereich nicht gefunden"]);
+        exit;
+    }
+
+    $content = trim((string)($matches[1] ?? ""));
+    echo json_encode([
+        "status" => "OK",
+        "page" => $pageKey,
+        "content" => $content
+    ]);
+    exit;
+}
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $action = strtolower(trim((string)($_POST["action"] ?? "")));
+    if ($action === "save_page") {
+        $pageKey = strtolower(trim((string)($_POST["page"] ?? "")));
+        if (!isset($editablePages[$pageKey])) {
+            http_response_code(400);
+            echo json_encode(["status" => "ERR", "msg" => "ungueltige seite"]);
+            exit;
+        }
+
+        $content = (string)($_POST["content"] ?? "");
+        if (strlen($content) > 200000) {
+            http_response_code(413);
+            echo json_encode(["status" => "ERR", "msg" => "inhalt zu gross"]);
+            exit;
+        }
+
+        $pagePath = $editablePages[$pageKey];
+        $rawHtml = @file_get_contents($pagePath);
+        if ($rawHtml === false) {
+            http_response_code(500);
+            echo json_encode(["status" => "ERR", "msg" => "seite konnte nicht gelesen werden"]);
+            exit;
+        }
+
+        $updatedHtml = preg_replace_callback(
+            "/(<!--\\s*EDITABLE:START\\s*-->)(.*?)(<!--\\s*EDITABLE:END\\s*-->)/s",
+            function ($matches) use ($content) {
+                return $matches[1] . "\n" . $content . "\n" . $matches[3];
+            },
+            $rawHtml,
+            1
+        );
+
+        if ($updatedHtml === null || $updatedHtml === $rawHtml) {
+            http_response_code(500);
+            echo json_encode(["status" => "ERR", "msg" => "seite konnte nicht aktualisiert werden"]);
+            exit;
+        }
+
+        if (@file_put_contents($pagePath, $updatedHtml) === false) {
+            http_response_code(500);
+            echo json_encode(["status" => "ERR", "msg" => "seite konnte nicht gespeichert werden"]);
+            exit;
+        }
+
+        echo json_encode([
+            "status" => "OK",
+            "page" => $pageKey
+        ]);
+        exit;
+    }
+
     $imgtypRaw = strtolower(trim((string)($_POST["imgtyp"] ?? "fractals")));
     $imgtyp = $typeAliases[$imgtypRaw] ?? $imgtypRaw;
     if (!isset($typeToFolder[$imgtyp])) {
@@ -109,8 +205,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
     imagedestroy($source);
 
-    // API liefert weiterhin relative img-Pfade
-    $publicPath = str_replace("../", "./", $target);
+    $publicPath = str_replace($baseDir, "", $target);
+    if (strpos($publicPath, "/") !== 0) {
+        $publicPath = "/" . ltrim($publicPath, "/");
+    }
     echo json_encode([
         "status" => "OK",
         "img" => $publicPath,
@@ -119,11 +217,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     exit;
 }
 
-$path = "../img/fractals";
+$path = $baseDir . "/img/fractals";
 if (isset($_GET["digital"])) {
-    $path = "../img/digital";
+    $path = $baseDir . "/img/digital";
 } elseif (isset($_GET["fotos"])) {
-    $path = "../img/fotos";
+    $path = $baseDir . "/img/fotos";
 }
 
 if (isset($_GET["latest"])) {

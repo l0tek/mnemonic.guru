@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>mnemonic.guru - Gallery</title>
+        <title>mnemonic.guru - Lab</title>
     </head>
     <body class="gallery-page">
         <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
@@ -26,12 +26,7 @@
                             <a class="nav-link" href="/index.html">Home</a>
                         </li>
                         <li class="nav-item dropdown d-flex align-items-center">
-                            <a
-                                class="nav-link active"
-                                aria-current="page"
-                                href="/gallery.html"
-                                >Gallery</a
-                            >
+                            <a class="nav-link" href="/gallery.html">Gallery</a>
                             <button
                                 class="btn btn-link nav-link dropdown-toggle px-2"
                                 type="button"
@@ -62,7 +57,12 @@
                             </ul>
                         </li>
                         <li class="nav-item dropdown d-flex align-items-center">
-                            <a class="nav-link" href="/lab.html">Lab</a>
+                            <a
+                                class="nav-link active"
+                                aria-current="page"
+                                href="/lab.html"
+                                >Lab</a
+                            >
                             <button
                                 class="btn btn-link nav-link dropdown-toggle px-2"
                                 type="button"
@@ -145,21 +145,54 @@
                 </div>
             </div>
         </nav>
-
         <main class="container py-5">
             <header class="mb-4">
                 <p class="text-uppercase text-body-secondary fw-semibold mb-1">
-                    Curated Collection
+                    Lab Uebersicht
                 </p>
-                <h1 class="display-6 fw-bold mb-2">Gallery Uebersicht</h1>
+                <h1 class="display-6 fw-bold mb-2">Projekte und Hardware</h1>
                 <p class="text-body-secondary mb-0">
-                    Drei Bereiche mit direkten Einstiegen in die Untergalerien.
+                    Direkter Einstieg in Raspi, esp32 und Code.
                 </p>
             </header>
 
-            <section id="gallery-hero-grid" class="gallery-hero-grid"></section>
+            <section class="gallery-hero-grid">
+                <article class="gallery-hero-card">
+                    <div class="gallery-hero-media is-empty"></div>
+                    <div class="gallery-hero-content">
+                        <h2 class="h3 fw-bold mb-2">Raspi</h2>
+                        <p class="text-body-secondary mb-3">
+                            Raspberry Pi Projekte und Setups.
+                        </p>
+                        <a class="btn btn-primary" href="/raspi.html"
+                            >Zu Raspi</a
+                        >
+                    </div>
+                </article>
+                <article class="gallery-hero-card">
+                    <div class="gallery-hero-media is-empty"></div>
+                    <div class="gallery-hero-content">
+                        <h2 class="h3 fw-bold mb-2">esp32</h2>
+                        <p class="text-body-secondary mb-3">
+                            Firmware, Sensorik und Mikrocontroller-Ideen.
+                        </p>
+                        <a class="btn btn-primary" href="/esp32.html"
+                            >Zu esp32</a
+                        >
+                    </div>
+                </article>
+                <article class="gallery-hero-card">
+                    <div class="gallery-hero-media is-empty"></div>
+                    <div class="gallery-hero-content">
+                        <h2 class="h3 fw-bold mb-2">Code</h2>
+                        <p class="text-body-secondary mb-3">
+                            Snippets, Tools und Experimente rund um Code.
+                        </p>
+                        <a class="btn btn-primary" href="/code.html">Zu Code</a>
+                    </div>
+                </article>
+            </section>
         </main>
-
         <script type="module" src="/src/gallery.js"></script>
     </body>
 </html>

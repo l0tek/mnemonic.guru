@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="de" data-bs-theme="light">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>mnemonic.guru - Admin Upload</title>
+    </head>
+    <body class="admin-page">
+        <main class="container-fluid py-5 px-3 px-lg-4">
+            <section class="admin-shell admin-shell--wide mx-auto">
+                <div
+                    class="d-flex justify-content-between align-items-center mb-4"
+                >
+                    <div>
+                        <p
+                            class="text-uppercase text-body-secondary fw-semibold mb-1"
+                        >
+                            Restricted
+                        </p>
+                        <h1 class="h3 mb-0">Admin Bereich</h1>
+                    </div>
+                    <button
+                        id="theme-toggle"
+                        class="btn btn-outline-secondary theme-toggle"
+                        type="button"
+                        aria-label="Zu Darkmode wechseln"
+                    >
+                        <span class="theme-icon" aria-hidden="true"
+                            >&#127769;</span
+                        >
+                    </button>
+                </div>
+
+                <form id="admin-login-form" class="admin-login-form">
+                    <label class="form-label" for="admin-password"
+                        >Passwort</label
+                    >
+                    <input
+                        id="admin-password"
+                        class="form-control"
+                        type="password"
+                        autocomplete="current-password"
+                        required
+                    />
+                    <button class="btn btn-primary w-100 mt-3" type="submit">
+                        Anmelden
+                    </button>
+                    <p
+                        id="admin-login-error"
+                        class="text-danger small mt-2 mb-0 d-none"
+                    >
+                        Passwort ist falsch.
+                    </p>
+                </form>
+
+                <section id="admin-content" class="d-none" aria-live="polite">
+                    <div class="alert alert-success mb-4" role="status">
+                        Zugriff freigegeben.
+                    </div>
+
+                    <nav class="admin-menu nav nav-pills mb-4">
+                        <a class="nav-link" href="/4meo/index.html"
+                            >Dashboard</a
+                        >
+                        <a
+                            class="nav-link active"
+                            aria-current="page"
+                            href="/4meo/upload.html"
+                            >Bilder Upload</a
+                        >
+                        <a class="nav-link" href="/4meo/editor.html"
+                            >Seiten Editor</a
+                        >
+                    </nav>
+
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h2 class="h5 mb-3">Bilder Upload</h2>
+                            <form
+                                id="admin-upload-form"
+                                class="admin-upload-form"
+                            >
+                                <div class="mb-3">
+                                    <label
+                                        class="form-label"
+                                        for="upload-category"
+                                        >Kategorie</label
+                                    >
+                                    <select
+                                        id="upload-category"
+                                        class="form-select"
+                                        name="imgtyp"
+                                        required
+                                    >
+                                        <option value="fraktale">
+                                            Fraktale
+                                        </option>
+                                        <option value="digital">
+                                            Digital Art
+                                        </option>
+                                        <option value="fotos">Fotos</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="upload-image"
+                                        >Bild</label
+                                    >
+                                    <input
+                                        id="upload-image"
+                                        class="form-control"
+                                        type="file"
+                                        name="image"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        required
+                                    />
+                                </div>
+                                <button
+                                    class="btn btn-primary w-100"
+                                    type="submit"
+                                >
+                                    Bild hochladen
+                                </button>
+                            </form>
+                            <p
+                                id="admin-upload-status"
+                                class="small text-body-secondary mt-3 mb-0"
+                            >
+                                Waehle Kategorie und Bild fuer den Upload.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            </section>
+        </main>
+
+        <script type="module" src="/src/admin-upload.js"></script>
+    </body>
+</html>
