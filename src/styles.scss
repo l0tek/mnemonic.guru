@@ -82,7 +82,8 @@ body.is-loading > :not(#page-loader) {
 }
 
 .hero {
-    min-height: 100vh;
+    min-height: clamp(34rem, 72vh, 48rem);
+    padding-top: clamp(1.5rem, 3.5vh, 2.5rem);
     isolation: isolate;
     background:
         radial-gradient(
@@ -134,7 +135,7 @@ body.is-loading > :not(#page-loader) {
     position: relative;
     z-index: 4;
     max-width: 760px;
-    margin-top: 5rem;
+    margin-top: 3.5rem;
     background: rgba(7, 12, 25, 0.55);
     border-color: rgba(255, 255, 255, 0.22) !important;
     backdrop-filter: blur(8px);
@@ -143,6 +144,8 @@ body.is-loading > :not(#page-loader) {
 .latest-works {
     position: relative;
     z-index: 5;
+    margin-top: -5.5rem;
+    padding-top: calc(5.5rem + 0.75rem) !important;
     background: linear-gradient(180deg, rgba(6, 10, 22, 0.96) 0%, #070b17 100%);
 }
 
@@ -343,6 +346,16 @@ body.is-loading > :not(#page-loader) {
 }
 
 @media (max-width: 991.98px) {
+    .hero {
+        min-height: clamp(30rem, 84vh, 42rem);
+        padding-top: clamp(1.1rem, 3vh, 1.8rem);
+    }
+
+    .latest-works {
+        margin-top: -3rem;
+        padding-top: calc(3rem + 0.75rem) !important;
+    }
+
     .gallery-hero-grid {
         grid-template-columns: 1fr;
     }

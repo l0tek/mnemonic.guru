@@ -139,7 +139,7 @@ if (thinkerCanvas) {
 
   const animateThinker = () => {
     if (thinkerPivot) {
-      thinkerPivot.rotation.y += 0.0022;
+      thinkerPivot.rotation.y -= 0.0022;
     }
     renderer.render(scene, camera);
     window.requestAnimationFrame(animateThinker);
