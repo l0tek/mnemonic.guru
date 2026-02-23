@@ -17,17 +17,19 @@ const category = document.body.dataset.galleryCategory || "fraktale";
 
 const categoryConfig = {
   fraktale: {
-    requestUrl: API_URL,
+    requestUrl: `${API_URL}?latest=1`,
     imageBase: "https://mnemonic.guru/img/fractals/",
     thumbBase: "https://mnemonic.guru/img/fractals/tn/",
   },
   digitalart: {
-    requestUrl: `${API_URL}?digital=1`,
+    requestUrl: `${API_URL}?digital=1&latest=1`,
     imageBase: "https://mnemonic.guru/img/digital/",
+    thumbBase: "https://mnemonic.guru/img/digital/tn/",
   },
   fotos: {
-    requestUrl: `${API_URL}?fotos=1`,
+    requestUrl: `${API_URL}?fotos=1&latest=1`,
     imageBase: "https://mnemonic.guru/img/fotos/",
+    thumbBase: "https://mnemonic.guru/img/fotos/tn/",
   },
 };
 
@@ -55,6 +57,30 @@ const buildAssetUrl = (base, fileName) => {
   return `${base}${encodeURIComponent(fileName)}`;
 };
 
+const toAltText = (fileName) => {
+  let readableName = fileName;
+  try {
+    readableName = decodeURIComponent(fileName);
+  } catch {
+    readableName = fileName;
+  }
+  return readableName;
+};
+
+const withThumbFallback = (imageElement, fallbackUrl) => {
+  imageElement.addEventListener(
+    "error",
+    () => {
+      if (imageElement.dataset.fallbackApplied === "1") {
+        return;
+      }
+      imageElement.dataset.fallbackApplied = "1";
+      imageElement.src = fallbackUrl;
+    },
+    { once: true },
+  );
+};
+
 const renderImages = (files) => {
   if (!grid || !status) {
     return;
@@ -70,21 +96,25 @@ const renderImages = (files) => {
 
   status.textContent = `${imageFiles.length} Bilder geladen`;
   imageFiles.forEach((fileName) => {
+    const fullImageUrl = buildAssetUrl(config.imageBase, fileName);
     const card = document.createElement("article");
     card.className = "gallery-card card border-0";
 
     const anchor = document.createElement("a");
-    anchor.href = buildAssetUrl(config.imageBase, fileName);
+    anchor.href = fullImageUrl;
     anchor.dataset.gallery = category;
-    anchor.title = fileName;
+    anchor.title = toAltText(fileName);
 
     const image = document.createElement("img");
     image.src = config.thumbBase
       ? buildAssetUrl(config.thumbBase, fileName)
-      : buildAssetUrl(config.imageBase, fileName);
-    image.alt = fileName;
+      : fullImageUrl;
+    image.alt = toAltText(fileName);
     image.loading = "lazy";
     image.className = "card-img-top gallery-thumb";
+    if (config.thumbBase) {
+      withThumbFallback(image, fullImageUrl);
+    }
 
     anchor.appendChild(image);
     card.appendChild(anchor);

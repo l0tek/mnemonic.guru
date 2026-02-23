@@ -14,7 +14,7 @@ const categories = [
     title: "Fraktale",
     text: "Generative Muster, Tiefe und Strukturen.",
     pageUrl: "/fraktale.html",
-    requestUrl: API_URL,
+    requestUrl: `${API_URL}?latest=1`,
     imageBase: "https://mnemonic.guru/img/fractals/",
     thumbBase: "https://mnemonic.guru/img/fractals/tn/",
   },
@@ -23,16 +23,18 @@ const categories = [
     title: "Digital Art",
     text: "Digitale Kompositionen und visuelle Experimente.",
     pageUrl: "/digitalart.html",
-    requestUrl: `${API_URL}?digital=1`,
+    requestUrl: `${API_URL}?digital=1&latest=1`,
     imageBase: "https://mnemonic.guru/img/digital/",
+    thumbBase: "https://mnemonic.guru/img/digital/tn/",
   },
   {
     key: "fotos",
     title: "Fotos",
     text: "Fotografien und visuelle Momentaufnahmen.",
     pageUrl: "/fotos.html",
-    requestUrl: `${API_URL}?fotos=1`,
+    requestUrl: `${API_URL}?fotos=1&latest=1`,
     imageBase: "https://mnemonic.guru/img/fotos/",
+    thumbBase: "https://mnemonic.guru/img/fotos/tn/",
   },
 ];
 
@@ -60,6 +62,30 @@ const buildAssetUrl = (base, fileName) => {
   return `${base}${encodeURIComponent(fileName)}`;
 };
 
+const toAltText = (fileName) => {
+  let readableName = fileName;
+  try {
+    readableName = decodeURIComponent(fileName);
+  } catch {
+    readableName = fileName;
+  }
+  return readableName;
+};
+
+const withThumbFallback = (imageElement, fallbackUrl) => {
+  imageElement.addEventListener(
+    "error",
+    () => {
+      if (imageElement.dataset.fallbackApplied === "1") {
+        return;
+      }
+      imageElement.dataset.fallbackApplied = "1";
+      imageElement.src = fallbackUrl;
+    },
+    { once: true },
+  );
+};
+
 const loadCategoryImages = async (category) => {
   try {
     const response = await fetch(category.requestUrl, { cache: "no-store" });
@@ -85,13 +111,17 @@ const createHeroCard = (category, imageName) => {
   media.className = "gallery-hero-media";
 
   if (imageName) {
+    const fullImageUrl = buildAssetUrl(category.imageBase, imageName);
     const image = document.createElement("img");
     image.className = "gallery-hero-image";
     image.loading = "lazy";
-    image.alt = `${category.title} Preview`;
+    image.alt = toAltText(imageName);
     image.src = category.thumbBase
       ? buildAssetUrl(category.thumbBase, imageName)
-      : buildAssetUrl(category.imageBase, imageName);
+      : fullImageUrl;
+    if (category.thumbBase) {
+      withThumbFallback(image, fullImageUrl);
+    }
     media.appendChild(image);
   } else {
     media.classList.add("is-empty");

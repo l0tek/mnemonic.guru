@@ -38,6 +38,31 @@ $editablePages = [
     "esp32" => $baseDir . "/esp32.html",
     "code" => $baseDir . "/code.html",
 ];
+const THUMB_MAX_EDGE = 640;
+
+function sanitizeUploadBaseName(string $originalName): string
+{
+    $base = pathinfo($originalName, PATHINFO_FILENAME);
+    $base = trim($base);
+    if ($base === "") {
+        return "upload";
+    }
+
+    $base = preg_replace("/[^\p{L}\p{N}\-\._ ]+/u", "", $base) ?? "";
+    $base = preg_replace("/\s+/", " ", $base) ?? "";
+    $base = trim($base, ". \t\n\r\0\x0B");
+
+    if ($base === "") {
+        return "upload";
+    }
+
+    if (strlen($base) > 180) {
+        $base = substr($base, 0, 180);
+        $base = rtrim($base, ". ");
+    }
+
+    return $base !== "" ? $base : "upload";
+}
 
 if (isset($_GET["page_content"])) {
     $pageKey = strtolower(trim((string)($_GET["page"] ?? "")));
@@ -195,13 +220,74 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         exit;
     }
 
-    $filename = bin2hex(random_bytes(16)) . ".jpg";
+    $originalName = (string)($file["name"] ?? "upload.jpg");
+    $baseName = sanitizeUploadBaseName($originalName);
+    $filename = $baseName . ".jpg";
+    $counter = 2;
+    while (file_exists(rtrim($targetDir, "/") . "/" . $filename)) {
+        $filename = $baseName . "-" . $counter . ".jpg";
+        $counter++;
+    }
+
     $target = rtrim($targetDir, "/") . "/" . $filename;
     if (!imagejpeg($source, $target, 90)) {
         imagedestroy($source);
         http_response_code(500);
         echo json_encode(["status" => "ERR", "msg" => "speichern fehlgeschlagen"]);
         exit;
+    }
+
+    if (in_array($imgtyp, ["fractals", "digital", "fotos"], true)) {
+        $thumbDir = rtrim($targetDir, "/") . "/tn";
+        if (!is_dir($thumbDir) && !mkdir($thumbDir, 0755, true)) {
+            @unlink($target);
+            imagedestroy($source);
+            http_response_code(500);
+            echo json_encode(["status" => "ERR", "msg" => "thumbnail-verzeichnis fehlt"]);
+            exit;
+        }
+
+        $srcWidth = imagesx($source);
+        $srcHeight = imagesy($source);
+        if ($srcWidth <= 0 || $srcHeight <= 0) {
+            @unlink($target);
+            imagedestroy($source);
+            http_response_code(500);
+            echo json_encode(["status" => "ERR", "msg" => "ungueltige bildgroesse"]);
+            exit;
+        }
+
+        $thumbScale = min(THUMB_MAX_EDGE / $srcWidth, THUMB_MAX_EDGE / $srcHeight, 1);
+        $thumbWidth = max(1, (int)round($srcWidth * $thumbScale));
+        $thumbHeight = max(1, (int)round($srcHeight * $thumbScale));
+        $thumb = imagecreatetruecolor($thumbWidth, $thumbHeight);
+        if (!$thumb) {
+            @unlink($target);
+            imagedestroy($source);
+            http_response_code(500);
+            echo json_encode(["status" => "ERR", "msg" => "thumbnail-erstellung fehlgeschlagen"]);
+            exit;
+        }
+
+        if (!imagecopyresampled($thumb, $source, 0, 0, 0, 0, $thumbWidth, $thumbHeight, $srcWidth, $srcHeight)) {
+            imagedestroy($thumb);
+            @unlink($target);
+            imagedestroy($source);
+            http_response_code(500);
+            echo json_encode(["status" => "ERR", "msg" => "thumbnail-resize fehlgeschlagen"]);
+            exit;
+        }
+
+        $thumbTarget = $thumbDir . "/" . $filename;
+        if (!imagejpeg($thumb, $thumbTarget, 85)) {
+            imagedestroy($thumb);
+            @unlink($target);
+            imagedestroy($source);
+            http_response_code(500);
+            echo json_encode(["status" => "ERR", "msg" => "thumbnail-speichern fehlgeschlagen"]);
+            exit;
+        }
+        imagedestroy($thumb);
     }
     imagedestroy($source);
 
