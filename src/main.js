@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 
 const pageLoader = document.getElementById("page-loader");
+const newsModalLoader = document.getElementById("news-modal-loader");
 
 const revealPage = () => {
   document.body.classList.remove("is-loading");
@@ -334,6 +335,7 @@ if (canvas) {
 }
 
 const latestWorksGrid = document.getElementById("latest-works-grid");
+const latestNewsGrid = document.getElementById("latest-news-grid");
 const API_URL = "https://www.mnemonic.guru/api/index.php";
 const IMAGE_PATTERN = /\.(jpg|jpeg|png|gif|webp)$/i;
 const teaserCategories = [
@@ -356,6 +358,51 @@ const teaserCategories = [
     pageUrl: "/fotos.html",
   },
 ];
+
+const newsTeaserFeeds = [
+  {
+    label: "Security",
+    requestUrl: `${API_URL}?rss=security&limit=1`,
+  },
+  {
+    label: "heise online",
+    requestUrl: `${API_URL}?rss=heiseonline&limit=1`,
+  },
+  {
+    label: "Telepolis",
+    requestUrl: `${API_URL}?rss=telepolis&limit=1`,
+  },
+];
+
+const toDateTimeLabel = (value) => {
+  if (!value) {
+    return "";
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+  return new Intl.DateTimeFormat("de-DE", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+};
+
+const showNewsModalLoader = () => {
+  if (!newsModalLoader) {
+    return;
+  }
+  newsModalLoader.classList.add("is-active");
+  newsModalLoader.setAttribute("aria-hidden", "false");
+};
+
+const hideNewsModalLoader = () => {
+  if (!newsModalLoader) {
+    return;
+  }
+  newsModalLoader.classList.remove("is-active");
+  newsModalLoader.setAttribute("aria-hidden", "true");
+};
 
 const renderLatestCard = (category, fileName) => {
   if (!latestWorksGrid) {
@@ -409,4 +456,92 @@ const loadLatestWorks = async () => {
   }
 };
 
+const renderLatestNewsCard = (feed, item) => {
+  if (!latestNewsGrid) {
+    return;
+  }
+
+  const card = document.createElement("article");
+  card.className = "latest-news-card";
+
+  if (item.image) {
+    const image = document.createElement("img");
+    image.className = "latest-news-image";
+    image.src = item.image;
+    image.alt = item.title || `${feed.label} - Newsbild`;
+    image.loading = "lazy";
+    image.referrerPolicy = "no-referrer";
+    card.appendChild(image);
+  }
+
+  const body = document.createElement("div");
+  body.className = "latest-news-meta";
+
+  const source = document.createElement("span");
+  source.textContent = feed.label;
+
+  const title = document.createElement("strong");
+  title.textContent = item.title || "Ohne Titel";
+
+  const date = document.createElement("small");
+  date.className = "text-body-secondary";
+  date.textContent = toDateTimeLabel(item.pubDate);
+
+  const link = document.createElement("a");
+  link.className = "btn btn-sm btn-outline-light mt-2 align-self-start";
+  link.href = item.link || "/news.html";
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.textContent = "Artikel lesen";
+
+  body.append(source, title, date, link);
+  card.appendChild(body);
+  latestNewsGrid.appendChild(card);
+};
+
+const loadLatestNews = async () => {
+  if (!latestNewsGrid) {
+    return;
+  }
+  latestNewsGrid.innerHTML = "";
+
+  for (let i = 0; i < newsTeaserFeeds.length; i += 1) {
+    const feed = newsTeaserFeeds[i];
+    try {
+      const response = await fetch(feed.requestUrl, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const payload = await response.json();
+      const firstItem = Array.isArray(payload.items) ? payload.items[0] : null;
+      if (!firstItem) {
+        throw new Error("Keine Feed-Eintraege");
+      }
+      renderLatestNewsCard(feed, firstItem);
+    } catch (error) {
+      console.error(`Latest news failed (${feed.label}):`, error);
+      renderLatestNewsCard(feed, {
+        title: "Keine News verfuegbar",
+        pubDate: "",
+        link: "/news.html",
+        image: "",
+      });
+    }
+  }
+};
+
+const initLatestNews = async () => {
+  if (!latestNewsGrid) {
+    hideNewsModalLoader();
+    return;
+  }
+  showNewsModalLoader();
+  try {
+    await loadLatestNews();
+  } finally {
+    hideNewsModalLoader();
+  }
+};
+
+initLatestNews();
 loadLatestWorks();

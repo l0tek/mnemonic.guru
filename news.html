@@ -3,30 +3,9 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>mnemonic.guru</title>
+        <title>mnemonic.guru - News</title>
     </head>
-    <body>
-        <div
-            id="page-loader"
-            class="page-loader"
-            role="status"
-            aria-live="polite"
-        >
-            <div class="spinner-border text-light" aria-hidden="true"></div>
-            <span class="page-loader-text">Seite wird geladen ...</span>
-        </div>
-        <div
-            id="news-modal-loader"
-            class="news-modal-loader"
-            role="status"
-            aria-live="polite"
-            aria-hidden="true"
-        >
-            <div class="news-modal-loader-dialog">
-                <div class="spinner-border text-light" aria-hidden="true"></div>
-                <p class="mb-0">News werden geladen ...</p>
-            </div>
-        </div>
+    <body class="gallery-page">
         <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
             <div class="container">
                 <a class="navbar-brand" href="/index.html">mnemonic.guru</a>
@@ -35,18 +14,16 @@
                     type="button"
                     data-bs-toggle="collapse"
                     data-bs-target="#nav"
+                    aria-controls="nav"
+                    aria-expanded="false"
+                    aria-label="Navigation umschalten"
                 >
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div id="nav" class="collapse navbar-collapse">
                     <ul class="navbar-nav w-100 gap-2 align-items-lg-center">
                         <li class="nav-item">
-                            <a
-                                class="nav-link active"
-                                aria-current="page"
-                                href="/index.html"
-                                >Home</a
-                            >
+                            <a class="nav-link" href="/index.html">Home</a>
                         </li>
                         <li class="nav-item dropdown d-flex align-items-center">
                             <a class="nav-link" href="/gallery.html">Gallery</a>
@@ -107,7 +84,12 @@
                             </ul>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="/news.html">News</a>
+                            <a
+                                class="nav-link active"
+                                aria-current="page"
+                                href="/news.html"
+                                >News</a
+                            >
                         </li>
                         <li class="nav-item d-flex gap-2 ms-lg-auto">
                             <a
@@ -167,96 +149,101 @@
             </div>
         </nav>
 
-        <main class="hero position-relative overflow-hidden">
-            <canvas
-                id="thinker-wireframe"
-                class="hero-model-canvas"
-                aria-hidden="true"
-            ></canvas>
-            <canvas
-                id="spiders"
-                class="hero-canvas"
-                aria-hidden="true"
-            ></canvas>
-            <div class="hero-bg" aria-hidden="true"></div>
-            <div class="container position-relative d-flex align-items-center">
-                <div class="hero-content p-4 p-md-5 rounded-4 border">
-                    <p
-                        class="text-uppercase text-body-secondary fw-semibold mb-2"
-                    >
-                        Ideen mit Strom
-                    </p>
-                    <h1 class="display-4 fw-bold mb-3">
-                        Mein digitales Atelier fuer Code, Skizzen und verrueckte
-                        Einfaelle.
-                    </h1>
-                    <p class="lead text-body-secondary mb-4">
-                        Hier wird gebaut, verworfen, neu gedacht und manchmal
-                        etwas wirklich Gutes gefunden.
-                    </p>
-                    <div class="d-flex gap-2 flex-wrap">
-                        <a
-                            class="btn btn-outline-light btn-lg"
-                            href="/news.html"
-                            >News</a
+        <main class="container py-5">
+            <header class="mb-4">
+                <p class="text-uppercase text-body-secondary fw-semibold mb-1">
+                    RSS Feed
+                </p>
+                <h1 class="display-6 fw-bold mb-2">News</h1>
+                <p class="text-body-secondary mb-0">
+                    Aktuelle Meldungen aus dem Heise Security Feed.
+                </p>
+            </header>
+
+            <section class="mb-4">
+                <div class="accordion" id="news-security-accordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="security-heading">
+                            <button
+                                class="accordion-button"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#security-collapse"
+                                aria-expanded="true"
+                                aria-controls="security-collapse"
+                            >
+                                Security
+                            </button>
+                        </h2>
+                        <div
+                            id="security-collapse"
+                            class="accordion-collapse collapse show"
+                            aria-labelledby="security-heading"
+                            data-bs-parent="#news-security-accordion"
                         >
+                            <div class="accordion-body">
+                                <div id="security-news-list">
+                                    Lade Security-News ...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heise-online-heading">
+                            <button
+                                class="accordion-button collapsed"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#heise-online-collapse"
+                                aria-expanded="false"
+                                aria-controls="heise-online-collapse"
+                            >
+                                heise online
+                            </button>
+                        </h2>
+                        <div
+                            id="heise-online-collapse"
+                            class="accordion-collapse collapse"
+                            aria-labelledby="heise-online-heading"
+                            data-bs-parent="#news-security-accordion"
+                        >
+                            <div class="accordion-body">
+                                <div id="heise-online-news-list">
+                                    Lade heise-online-News ...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="telepolis-heading">
+                            <button
+                                class="accordion-button collapsed"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#telepolis-collapse"
+                                aria-expanded="false"
+                                aria-controls="telepolis-collapse"
+                            >
+                                Telepolis
+                            </button>
+                        </h2>
+                        <div
+                            id="telepolis-collapse"
+                            class="accordion-collapse collapse"
+                            aria-labelledby="telepolis-heading"
+                            data-bs-parent="#news-security-accordion"
+                        >
+                            <div class="accordion-body">
+                                <div id="telepolis-news-list">
+                                    Lade Telepolis-News ...
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </section>
         </main>
 
-        <section class="latest-news pt-3 pb-5">
-            <div class="container">
-                <div
-                    class="d-flex justify-content-between align-items-end mb-4"
-                >
-                    <div>
-                        <p
-                            class="text-uppercase text-body-secondary fw-semibold mb-1"
-                        >
-                            Neueste News
-                        </p>
-                        <h2 class="h3 mb-0">
-                            Aus Security, heise online und Telepolis
-                        </h2>
-                    </div>
-                    <a class="btn btn-outline-light" href="/news.html"
-                        >Zur News-Seite</a
-                    >
-                </div>
-                <div
-                    id="latest-news-grid"
-                    class="latest-news-grid"
-                    aria-live="polite"
-                ></div>
-            </div>
-        </section>
-
-        <section class="latest-works pt-3 pb-5">
-            <div class="container">
-                <div
-                    class="d-flex justify-content-between align-items-end mb-4"
-                >
-                    <div>
-                        <p
-                            class="text-uppercase text-body-secondary fw-semibold mb-1"
-                        >
-                            Neueste Werke
-                        </p>
-                        <h2 class="h3 mb-0">Aus Fractals, Digital und Fotos</h2>
-                    </div>
-                    <a class="btn btn-outline-light" href="/gallery.html"
-                        >Zur Gallery</a
-                    >
-                </div>
-                <div
-                    id="latest-works-grid"
-                    class="latest-works-grid"
-                    aria-live="polite"
-                ></div>
-            </div>
-        </section>
-
-        <script type="module" src="/src/main.js"></script>
+        <script type="module" src="/src/news.js"></script>
     </body>
 </html>

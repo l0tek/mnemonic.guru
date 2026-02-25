@@ -64,6 +64,91 @@ function sanitizeUploadBaseName(string $originalName): string
     return $base !== "" ? $base : "upload";
 }
 
+function extractFirstImageUrl(string $html): string
+{
+    if (trim($html) === "") {
+        return "";
+    }
+
+    if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $html, $matches)) {
+        return trim((string)($matches[1] ?? ""));
+    }
+
+    return "";
+}
+
+function absolutizeUrl(string $url, string $baseUrl): string
+{
+    $url = trim($url);
+    if ($url === "") {
+        return "";
+    }
+
+    if (preg_match('/^https?:\/\//i', $url)) {
+        return $url;
+    }
+
+    if (strpos($url, "//") === 0) {
+        $scheme = parse_url($baseUrl, PHP_URL_SCHEME) ?: "https";
+        return $scheme . ":" . $url;
+    }
+
+    $baseParts = parse_url($baseUrl);
+    if (!is_array($baseParts) || empty($baseParts["host"])) {
+        return $url;
+    }
+
+    $scheme = $baseParts["scheme"] ?? "https";
+    $host = $baseParts["host"];
+    $port = isset($baseParts["port"]) ? ":" . $baseParts["port"] : "";
+
+    if (strpos($url, "/") === 0) {
+        return $scheme . "://" . $host . $port . $url;
+    }
+
+    $path = $baseParts["path"] ?? "/";
+    $directory = preg_replace('~/[^/]*$~', "/", $path) ?? "/";
+    return $scheme . "://" . $host . $port . $directory . $url;
+}
+
+function fetchArticleImageUrl(string $articleUrl): string
+{
+    if (trim($articleUrl) === "") {
+        return "";
+    }
+
+    static $cache = [];
+    if (isset($cache[$articleUrl])) {
+        return $cache[$articleUrl];
+    }
+
+    $context = stream_context_create([
+        "http" => [
+            "method" => "GET",
+            "timeout" => 8,
+            "header" => "User-Agent: mnemonic.guru RSS Reader\r\n",
+        ],
+    ]);
+
+    $html = @file_get_contents($articleUrl, false, $context);
+    if ($html === false || trim($html) === "") {
+        $cache[$articleUrl] = "";
+        return "";
+    }
+
+    $image = "";
+    if (preg_match('/<meta[^>]+property=["\']og:image["\'][^>]*content=["\']([^"\']+)["\']/i', $html, $matchOg)) {
+        $image = trim((string)($matchOg[1] ?? ""));
+    } elseif (preg_match('/<meta[^>]+name=["\']twitter:image["\'][^>]*content=["\']([^"\']+)["\']/i', $html, $matchTwitter)) {
+        $image = trim((string)($matchTwitter[1] ?? ""));
+    } else {
+        $image = extractFirstImageUrl($html);
+    }
+
+    $cache[$articleUrl] = absolutizeUrl($image, $articleUrl);
+    return $cache[$articleUrl];
+}
+
 if (isset($_GET["page_content"])) {
     $pageKey = strtolower(trim((string)($_GET["page"] ?? "")));
     if (!isset($editablePages[$pageKey])) {
@@ -299,6 +384,161 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         "status" => "OK",
         "img" => $publicPath,
         "typ" => $imgtyp
+    ]);
+    exit;
+}
+
+$rssFeeds = [
+    "security" => "https://www.heise.de/security/feed.xml",
+    "heiseonline" => "https://www.heise.de/rss/heise-atom.xml",
+    "telepolis" => "https://www.telepolis.de/news-atom.xml",
+];
+
+if (isset($_GET["rss"])) {
+    $rssKey = strtolower(trim((string)($_GET["rss"] ?? "")));
+    $limit = (int)($_GET["limit"] ?? 20);
+    if ($limit < 1) {
+        $limit = 1;
+    }
+    if ($limit > 20) {
+        $limit = 20;
+    }
+    if (!isset($rssFeeds[$rssKey])) {
+        http_response_code(400);
+        echo json_encode(["status" => "ERR", "msg" => "ungueltiger rss feed"]);
+        exit;
+    }
+
+    $context = stream_context_create([
+        "http" => [
+            "method" => "GET",
+            "timeout" => 8,
+            "header" => "User-Agent: mnemonic.guru RSS Reader\r\n",
+        ],
+    ]);
+
+    $rawFeed = @file_get_contents($rssFeeds[$rssKey], false, $context);
+    if ($rawFeed === false || trim($rawFeed) === "") {
+        http_response_code(502);
+        echo json_encode(["status" => "ERR", "msg" => "rss feed nicht erreichbar"]);
+        exit;
+    }
+
+    libxml_use_internal_errors(true);
+    $xml = simplexml_load_string($rawFeed);
+    libxml_clear_errors();
+    if ($xml === false) {
+        http_response_code(502);
+        echo json_encode(["status" => "ERR", "msg" => "rss feed ungueltig"]);
+        exit;
+    }
+
+    $items = [];
+
+    // Classic RSS 2.0 parsing (<channel><item>)
+    if (isset($xml->channel->item)) {
+        foreach ($xml->channel->item as $entry) {
+            $rawDescription = (string)($entry->description ?? "");
+            $items[] = [
+                "title" => trim((string)($entry->title ?? "")),
+                "link" => trim((string)($entry->link ?? "")),
+                "pubDate" => trim((string)($entry->pubDate ?? "")),
+                "description" => trim(html_entity_decode(strip_tags($rawDescription), ENT_QUOTES | ENT_HTML5, "UTF-8")),
+                "image" => extractFirstImageUrl($rawDescription),
+            ];
+            if (count($items) >= $limit) {
+                break;
+            }
+        }
+    }
+
+    // Atom parsing (<feed><entry>) e.g. heise.de feeds
+    if (count($items) === 0) {
+        $atomEntries = $xml->xpath("//*[local-name()='entry']");
+        if (is_array($atomEntries)) {
+            foreach ($atomEntries as $entry) {
+                $link = "";
+                $linkNodes = $entry->xpath("./*[local-name()='link']");
+                if (is_array($linkNodes)) {
+                    foreach ($linkNodes as $linkNode) {
+                        $attributes = $linkNode->attributes();
+                        $rel = trim((string)($attributes["rel"] ?? ""));
+                        $href = trim((string)($attributes["href"] ?? ""));
+                        if ($href === "") {
+                            continue;
+                        }
+                        if ($rel === "" || $rel === "alternate") {
+                            $link = $href;
+                            break;
+                        }
+                        if ($link === "") {
+                            $link = $href;
+                        }
+                    }
+                }
+
+                $summaryNodes = $entry->xpath("./*[local-name()='summary']");
+                $contentNodes = $entry->xpath("./*[local-name()='content']");
+                $updatedNodes = $entry->xpath("./*[local-name()='updated']");
+                $publishedNodes = $entry->xpath("./*[local-name()='published']");
+                $titleNodes = $entry->xpath("./*[local-name()='title']");
+
+                $rawDescription = "";
+                if (is_array($summaryNodes) && isset($summaryNodes[0])) {
+                    $rawDescription = (string)$summaryNodes[0];
+                } elseif (is_array($contentNodes) && isset($contentNodes[0])) {
+                    $rawDescription = (string)$contentNodes[0];
+                }
+
+                $rawContent = "";
+                if (is_array($contentNodes) && isset($contentNodes[0])) {
+                    $rawContent = (string)$contentNodes[0];
+                }
+
+                $pubDate = "";
+                if (is_array($updatedNodes) && isset($updatedNodes[0])) {
+                    $pubDate = trim((string)$updatedNodes[0]);
+                } elseif (is_array($publishedNodes) && isset($publishedNodes[0])) {
+                    $pubDate = trim((string)$publishedNodes[0]);
+                }
+
+                $title = "";
+                if (is_array($titleNodes) && isset($titleNodes[0])) {
+                    $title = trim((string)$titleNodes[0]);
+                }
+
+                $items[] = [
+                    "title" => $title,
+                    "link" => $link,
+                    "pubDate" => $pubDate,
+                    "description" => trim(html_entity_decode(strip_tags($rawDescription), ENT_QUOTES | ENT_HTML5, "UTF-8")),
+                    "image" => extractFirstImageUrl($rawContent !== "" ? $rawContent : $rawDescription),
+                ];
+
+                if (count($items) >= $limit) {
+                    break;
+                }
+            }
+        }
+    }
+
+    // Feeds wie Telepolis enthalten im Atom-Feed oft keine Bilder.
+    // Dann wird das erste Artikelbild per URL nachgeladen.
+    for ($i = 0; $i < count($items); $i++) {
+        if (!empty($items[$i]["image"])) {
+            continue;
+        }
+        $articleLink = trim((string)($items[$i]["link"] ?? ""));
+        if ($articleLink === "") {
+            continue;
+        }
+        $items[$i]["image"] = fetchArticleImageUrl($articleLink);
+    }
+
+    echo json_encode([
+        "status" => "OK",
+        "feed" => $rssKey,
+        "items" => $items,
     ]);
     exit;
 }

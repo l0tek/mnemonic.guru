@@ -15,6 +15,7 @@ export default defineConfig({
         raspi: resolve(__dirname, "raspi.html"),
         esp32: resolve(__dirname, "esp32.html"),
         code: resolve(__dirname, "code.html"),
+        news: resolve(__dirname, "news.html"),
         adminDashboard: resolve(__dirname, "4meo/index.html"),
         adminUpload: resolve(__dirname, "4meo/upload.html"),
         adminEditor: resolve(__dirname, "4meo/editor.html"),
