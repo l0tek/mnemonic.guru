@@ -336,8 +336,15 @@ if (canvas) {
 
 const latestWorksGrid = document.getElementById("latest-works-grid");
 const latestNewsGrid = document.getElementById("latest-news-grid");
+const latestProjectsGrid = document.getElementById("latest-projects-grid");
+const pageEditableContent = document.getElementById("page-editable-content");
 const API_URL = "https://www.mnemonic.guru/api/index.php";
 const IMAGE_PATTERN = /\.(jpg|jpeg|png|gif|webp)$/i;
+const projectPages = [
+  { key: "raspi", label: "Raspi", pageUrl: "/raspi.html" },
+  { key: "esp32", label: "esp32", pageUrl: "/esp32.html" },
+  { key: "code", label: "Code", pageUrl: "/code.html" },
+];
 const teaserCategories = [
   {
     label: "Fractals",
@@ -543,5 +550,292 @@ const initLatestNews = async () => {
   }
 };
 
+const inferPageKeyFromPath = () => {
+  const path = window.location.pathname.toLowerCase();
+  if (path.endsWith("/raspi.html")) {
+    return "raspi";
+  }
+  if (path.endsWith("/esp32.html")) {
+    return "esp32";
+  }
+  if (path.endsWith("/code.html")) {
+    return "code";
+  }
+  return "";
+};
+
+const parseProjectCardsFromContent = (content, pageKey) => {
+  const html = String(content || "").trim();
+  if (!html) {
+    return [];
+  }
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(
+    `<div id="root">${html}</div>`,
+    "text/html",
+  );
+  const cards = Array.from(doc.querySelectorAll(".project-section-card"));
+
+  if (!cards.length) {
+    return [];
+  }
+
+  return cards.map((card, index) => {
+    const title =
+      card.querySelector(".project-section-title")?.textContent?.trim() ||
+      `Artikel ${index + 1}`;
+    const summary =
+      card.querySelector(".project-section-summary")?.textContent?.trim() || "";
+    const bodyHtml =
+      card.querySelector(".project-section-body")?.innerHTML || "";
+    const imageUrl = card.querySelector(".project-section-body img")?.src || "";
+    const originalIndex = index + 1;
+    return {
+      id: `${pageKey}-article-${originalIndex}`,
+      pageKey,
+      title,
+      summary,
+      bodyHtml,
+      imageUrl,
+      originalIndex,
+    };
+  });
+};
+
+const toTimestamp = (value) => {
+  const date = new Date(value || "");
+  const unix = date.getTime();
+  return Number.isNaN(unix) ? 0 : unix;
+};
+
+const getPageMetaByKey = (pageKey) => {
+  return (
+    projectPages.find((entry) => entry.key === pageKey) || {
+      key: pageKey,
+      label: pageKey,
+      pageUrl: `/${pageKey}.html`,
+    }
+  );
+};
+
+const renderProjectArticleCards = (container, pageKey, content) => {
+  if (!container) {
+    return false;
+  }
+
+  const articles = parseProjectCardsFromContent(content, pageKey).sort(
+    (a, b) => b.originalIndex - a.originalIndex,
+  );
+  if (!articles.length) {
+    return false;
+  }
+  const urlArticleId =
+    new URLSearchParams(window.location.search).get("article") || "";
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "raspi-articles";
+
+  const grid = document.createElement("div");
+  grid.className = "raspi-articles-grid";
+
+  const detail = document.createElement("article");
+  detail.className = "raspi-article-detail d-none";
+
+  const detailTitle = document.createElement("h2");
+  detailTitle.className = "h4 fw-bold mb-3";
+
+  const detailBody = document.createElement("div");
+  detailBody.className = "raspi-article-detail-body";
+
+  detail.append(detailTitle, detailBody);
+
+  const setDetail = (article, button, shouldScroll = true) => {
+    detailTitle.textContent = article.title;
+    detailBody.innerHTML = article.bodyHtml || "<p>Kein Inhalt vorhanden.</p>";
+    detail.classList.remove("d-none");
+
+    const buttons = grid.querySelectorAll(".raspi-article-open");
+    buttons.forEach((entry) => {
+      entry.classList.remove("active");
+      entry.setAttribute("aria-expanded", "false");
+    });
+    button.classList.add("active");
+    button.setAttribute("aria-expanded", "true");
+
+    if (shouldScroll) {
+      detail.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  let autoOpenButton = null;
+  let autoOpenArticle = null;
+
+  for (let i = 0; i < articles.length; i += 1) {
+    const article = articles[i];
+    const card = document.createElement("article");
+    card.className = "raspi-article-card";
+
+    if (article.imageUrl) {
+      const image = document.createElement("img");
+      image.className = "raspi-article-card-image";
+      image.loading = "lazy";
+      image.alt = article.title;
+      image.src = article.imageUrl;
+      card.appendChild(image);
+    }
+
+    const body = document.createElement("div");
+    body.className = "raspi-article-card-body";
+
+    const title = document.createElement("h3");
+    title.className = "h5 fw-bold mb-2";
+    title.textContent = article.title;
+
+    const summary = document.createElement("p");
+    summary.className = "text-body-secondary mb-3";
+    summary.textContent = article.summary || "Kein Kurztext vorhanden.";
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn btn-outline-primary raspi-article-open";
+    button.textContent = "Artikel lesen";
+    button.setAttribute("aria-expanded", "false");
+    button.addEventListener("click", () => {
+      setDetail(article, button);
+    });
+    if (urlArticleId && urlArticleId === article.id) {
+      autoOpenButton = button;
+      autoOpenArticle = article;
+    }
+
+    body.append(title, summary, button);
+    card.appendChild(body);
+    grid.appendChild(card);
+  }
+
+  wrapper.append(grid, detail);
+  container.innerHTML = "";
+  container.appendChild(wrapper);
+  if (autoOpenButton && autoOpenArticle) {
+    setDetail(autoOpenArticle, autoOpenButton, false);
+  }
+  return true;
+};
+
+const fetchProjectPagePayload = async (pageKey) => {
+  const response = await fetch(
+    `${API_URL}?page_content=1&page=${encodeURIComponent(pageKey)}`,
+    { cache: "no-store" },
+  );
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  const payload = await response.json();
+  if (String(payload?.status || "").toUpperCase() !== "OK") {
+    throw new Error(payload?.msg || "Unerwartete API-Antwort");
+  }
+  return payload;
+};
+
+const loadEditablePageContent = async () => {
+  if (!pageEditableContent) {
+    return;
+  }
+
+  const pageKey =
+    String(pageEditableContent.dataset.pageKey || "")
+      .trim()
+      .toLowerCase() || inferPageKeyFromPath();
+  if (!pageKey) {
+    return;
+  }
+
+  try {
+    const payload = await fetchProjectPagePayload(pageKey);
+    const content = String(payload?.content || "");
+    if (renderProjectArticleCards(pageEditableContent, pageKey, content)) {
+      return;
+    }
+    pageEditableContent.innerHTML = content;
+  } catch (error) {
+    console.error(`Page content load failed (${pageKey}):`, error);
+  }
+};
+
+const renderLatestProjectOverviewCard = (project) => {
+  if (!latestProjectsGrid) {
+    return;
+  }
+
+  const pageMeta = getPageMetaByKey(project.pageKey);
+  const card = document.createElement("article");
+  card.className = "latest-work-card";
+
+  const link = document.createElement("a");
+  link.href = `${pageMeta.pageUrl}?article=${encodeURIComponent(project.id)}`;
+  link.className = "latest-work-link";
+
+  if (project.imageUrl) {
+    const image = document.createElement("img");
+    image.className = "latest-work-image";
+    image.src = project.imageUrl;
+    image.alt = project.title;
+    image.loading = "lazy";
+    link.appendChild(image);
+  }
+
+  const meta = document.createElement("div");
+  meta.className = "latest-work-meta";
+  meta.innerHTML = `<span>${pageMeta.label}</span><strong>${project.title}</strong>`;
+
+  link.appendChild(meta);
+  card.appendChild(link);
+  latestProjectsGrid.appendChild(card);
+};
+
+const loadLatestProjectsOverview = async () => {
+  if (!latestProjectsGrid) {
+    return;
+  }
+  latestProjectsGrid.innerHTML = "";
+
+  const allProjects = [];
+  for (let i = 0; i < projectPages.length; i += 1) {
+    const page = projectPages[i];
+    try {
+      const payload = await fetchProjectPagePayload(page.key);
+      const pageUpdatedAt = toTimestamp(payload?.updated_at || "");
+      const projects = parseProjectCardsFromContent(
+        payload?.content || "",
+        page.key,
+      )
+        .sort((a, b) => b.originalIndex - a.originalIndex)
+        .map((entry, rank) => ({
+          ...entry,
+          pageUpdatedAt,
+          withinPageRank: rank,
+        }));
+      allProjects.push(...projects);
+    } catch (error) {
+      console.error(`Latest projects failed (${page.key}):`, error);
+    }
+  }
+
+  allProjects
+    .sort((a, b) => {
+      if (a.pageUpdatedAt !== b.pageUpdatedAt) {
+        return b.pageUpdatedAt - a.pageUpdatedAt;
+      }
+      return a.withinPageRank - b.withinPageRank;
+    })
+    .slice(0, 6)
+    .forEach((entry) => {
+      renderLatestProjectOverviewCard(entry);
+    });
+};
+
+loadEditablePageContent();
 initLatestNews();
 loadLatestWorks();
+loadLatestProjectsOverview();

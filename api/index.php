@@ -11,6 +11,8 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB
 $baseDir = realpath(__DIR__ . "/..");
+$sqliteDir = $baseDir . "/data";
+$sqlitePath = $sqliteDir . "/content.sqlite";
 $typeToFolder = [
     "fractals" => $baseDir . "/img/fractals",
     "digital" => $baseDir . "/img/digital",
@@ -39,6 +41,139 @@ $editablePages = [
     "code" => $baseDir . "/code.html",
 ];
 const THUMB_MAX_EDGE = 640;
+
+function extractEditableContentFromHtml(string $rawHtml): string
+{
+    if (!preg_match("/<!--\\s*EDITABLE:START\\s*-->(.*?)<!--\\s*EDITABLE:END\\s*-->/s", $rawHtml, $matches)) {
+        return "";
+    }
+
+    return trim((string)($matches[1] ?? ""));
+}
+
+function extractFirstProjectCard(string $html): string
+{
+    if (trim($html) === "") {
+        return "";
+    }
+
+    if (preg_match('/<article\\b[^>]*class=["\'][^"\']*project-section-card[^"\']*["\'][^>]*>.*?<\\/article>/is', $html, $matches)) {
+        return trim((string)($matches[0] ?? ""));
+    }
+
+    return "";
+}
+
+function fetchRemoteRaspiSeedContent(): string
+{
+    $context = stream_context_create([
+        "http" => [
+            "method" => "GET",
+            "timeout" => 8,
+            "header" => "User-Agent: mnemonic.guru Content Seeder\r\n",
+        ],
+    ]);
+
+    $rawHtml = @file_get_contents("https://mnemonic.guru/raspi.html", false, $context);
+    if ($rawHtml === false || trim($rawHtml) === "") {
+        return "";
+    }
+
+    $editableContent = extractEditableContentFromHtml($rawHtml);
+    $firstCard = extractFirstProjectCard($editableContent !== "" ? $editableContent : $rawHtml);
+    if ($firstCard !== "") {
+        return $firstCard;
+    }
+
+    return trim($editableContent);
+}
+
+function getPageFallbackContent(string $pagePath): string
+{
+    $rawHtml = @file_get_contents($pagePath);
+    if ($rawHtml === false) {
+        return "<p></p>";
+    }
+
+    $content = extractEditableContentFromHtml($rawHtml);
+    return $content !== "" ? $content : "<p></p>";
+}
+
+function getSqliteConnection(string $sqliteDir, string $sqlitePath): PDO
+{
+    if (!is_dir($sqliteDir) && !@mkdir($sqliteDir, 0755, true) && !is_dir($sqliteDir)) {
+        throw new RuntimeException("sqlite-verzeichnis konnte nicht erstellt werden");
+    }
+
+    $pdo = new PDO("sqlite:" . $sqlitePath);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS pages (
+            page_key TEXT PRIMARY KEY,
+            content TEXT NOT NULL,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )"
+    );
+
+    return $pdo;
+}
+
+function ensurePageSeed(PDO $pdo, string $pageKey, string $fallbackContent): void
+{
+    $checkStatement = $pdo->prepare("SELECT page_key FROM pages WHERE page_key = :page_key LIMIT 1");
+    $checkStatement->execute([":page_key" => $pageKey]);
+    if ($checkStatement->fetch()) {
+        return;
+    }
+
+    $seedContent = trim($fallbackContent);
+    if ($pageKey === "raspi") {
+        $remoteSeed = fetchRemoteRaspiSeedContent();
+        if ($remoteSeed !== "") {
+            $seedContent = $remoteSeed;
+        }
+    }
+    if ($seedContent === "") {
+        $seedContent = "<p></p>";
+    }
+
+    $insertStatement = $pdo->prepare(
+        "INSERT INTO pages (page_key, content, updated_at) VALUES (:page_key, :content, CURRENT_TIMESTAMP)"
+    );
+    $insertStatement->execute([
+        ":page_key" => $pageKey,
+        ":content" => $seedContent,
+    ]);
+}
+
+function readPageContentFromStore(PDO $pdo, string $pageKey): array
+{
+    $selectStatement = $pdo->prepare("SELECT content, updated_at FROM pages WHERE page_key = :page_key LIMIT 1");
+    $selectStatement->execute([":page_key" => $pageKey]);
+    $row = $selectStatement->fetch();
+
+    return [
+        "content" => trim((string)($row["content"] ?? "")),
+        "updated_at" => trim((string)($row["updated_at"] ?? "")),
+    ];
+}
+
+function savePageContentToStore(PDO $pdo, string $pageKey, string $content): void
+{
+    $statement = $pdo->prepare(
+        "INSERT INTO pages (page_key, content, updated_at)
+         VALUES (:page_key, :content, CURRENT_TIMESTAMP)
+         ON CONFLICT(page_key) DO UPDATE SET
+             content = excluded.content,
+             updated_at = CURRENT_TIMESTAMP"
+    );
+    $statement->execute([
+        ":page_key" => $pageKey,
+        ":content" => $content,
+    ]);
+}
 
 function sanitizeUploadBaseName(string $originalName): string
 {
@@ -157,25 +292,30 @@ if (isset($_GET["page_content"])) {
         exit;
     }
 
-    $pagePath = $editablePages[$pageKey];
-    $rawHtml = @file_get_contents($pagePath);
-    if ($rawHtml === false) {
+    if (!extension_loaded("pdo_sqlite")) {
         http_response_code(500);
-        echo json_encode(["status" => "ERR", "msg" => "seite konnte nicht gelesen werden"]);
+        echo json_encode(["status" => "ERR", "msg" => "sqlite nicht verfuegbar"]);
         exit;
     }
 
-    if (!preg_match("/<!--\\s*EDITABLE:START\\s*-->(.*?)<!--\\s*EDITABLE:END\\s*-->/s", $rawHtml, $matches)) {
+    try {
+        $pagePath = $editablePages[$pageKey];
+        $fallbackContent = getPageFallbackContent($pagePath);
+        $pdo = getSqliteConnection($sqliteDir, $sqlitePath);
+        ensurePageSeed($pdo, $pageKey, $fallbackContent);
+        $pageData = readPageContentFromStore($pdo, $pageKey);
+        $content = (string)($pageData["content"] ?? "");
+        $updatedAt = (string)($pageData["updated_at"] ?? "");
+    } catch (Throwable $exception) {
         http_response_code(500);
-        echo json_encode(["status" => "ERR", "msg" => "editierbereich nicht gefunden"]);
+        echo json_encode(["status" => "ERR", "msg" => "seiteninhalt konnte nicht geladen werden"]);
         exit;
     }
-
-    $content = trim((string)($matches[1] ?? ""));
     echo json_encode([
         "status" => "OK",
         "page" => $pageKey,
-        "content" => $content
+        "content" => $content,
+        "updated_at" => $updatedAt,
     ]);
     exit;
 }
@@ -197,32 +337,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             exit;
         }
 
-        $pagePath = $editablePages[$pageKey];
-        $rawHtml = @file_get_contents($pagePath);
-        if ($rawHtml === false) {
+        if (!extension_loaded("pdo_sqlite")) {
             http_response_code(500);
-            echo json_encode(["status" => "ERR", "msg" => "seite konnte nicht gelesen werden"]);
+            echo json_encode(["status" => "ERR", "msg" => "sqlite nicht verfuegbar"]);
             exit;
         }
 
-        $updatedHtml = preg_replace_callback(
-            "/(<!--\\s*EDITABLE:START\\s*-->)(.*?)(<!--\\s*EDITABLE:END\\s*-->)/s",
-            function ($matches) use ($content) {
-                return $matches[1] . "\n" . $content . "\n" . $matches[3];
-            },
-            $rawHtml,
-            1
-        );
-
-        if ($updatedHtml === null || $updatedHtml === $rawHtml) {
+        try {
+            $pagePath = $editablePages[$pageKey];
+            $fallbackContent = getPageFallbackContent($pagePath);
+            $pdo = getSqliteConnection($sqliteDir, $sqlitePath);
+            ensurePageSeed($pdo, $pageKey, $fallbackContent);
+            savePageContentToStore($pdo, $pageKey, $content);
+        } catch (Throwable $exception) {
             http_response_code(500);
-            echo json_encode(["status" => "ERR", "msg" => "seite konnte nicht aktualisiert werden"]);
-            exit;
-        }
-
-        if (@file_put_contents($pagePath, $updatedHtml) === false) {
-            http_response_code(500);
-            echo json_encode(["status" => "ERR", "msg" => "seite konnte nicht gespeichert werden"]);
+            echo json_encode(["status" => "ERR", "msg" => "seite konnte nicht in sqlite gespeichert werden"]);
             exit;
         }
 
@@ -393,6 +522,101 @@ $rssFeeds = [
     "heiseonline" => "https://www.heise.de/rss/heise-atom.xml",
     "telepolis" => "https://www.telepolis.de/news-atom.xml",
 ];
+
+$whoisRapidHost = "zozor54-whois-lookup-v1.p.rapidapi.com";
+$whoisRapidApiUrl = "https://zozor54-whois-lookup-v1.p.rapidapi.com/";
+$whoisRapidApiKey = getenv("RAPIDAPI_WHOIS_KEY") ?: "177394671amsh7d26c6624bc7d58p1e3590jsn7c8595e22d85";
+
+if (isset($_GET["whois"])) {
+    $mode = strtolower(trim((string)($_GET["mode"] ?? "whois")));
+    if ($mode !== "whois" && $mode !== "reverse") {
+        http_response_code(400);
+        echo json_encode(["status" => "ERR", "msg" => "ungueltiger modus"]);
+        exit;
+    }
+
+    if (trim($whoisRapidApiKey) === "") {
+        http_response_code(500);
+        echo json_encode(["status" => "ERR", "msg" => "rapidapi key fehlt"]);
+        exit;
+    }
+
+    $targetLabel = "";
+    $url = "";
+    if ($mode === "reverse") {
+        $ip = trim((string)($_GET["ip"] ?? ""));
+        if ($ip === "") {
+            http_response_code(400);
+            echo json_encode(["status" => "ERR", "msg" => "ip fehlt"]);
+            exit;
+        }
+        if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
+            http_response_code(400);
+            echo json_encode(["status" => "ERR", "msg" => "ungueltige ip"]);
+            exit;
+        }
+        $targetLabel = $ip;
+        $url = "https://zozor54-whois-lookup-v1.p.rapidapi.com/reverseWhois?" . http_build_query([
+            "ip" => $ip,
+        ]);
+    } else {
+        $domain = strtolower(trim((string)($_GET["domain"] ?? "")));
+        if ($domain === "") {
+            http_response_code(400);
+            echo json_encode(["status" => "ERR", "msg" => "domain fehlt"]);
+            exit;
+        }
+        if (!preg_match('/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i', $domain)) {
+            http_response_code(400);
+            echo json_encode(["status" => "ERR", "msg" => "ungueltige domain"]);
+            exit;
+        }
+        $targetLabel = $domain;
+        $url = $whoisRapidApiUrl . "?" . http_build_query([
+            "domain" => $domain,
+            "format" => "json",
+            "_forceRefresh" => "0",
+        ]);
+    }
+
+    $context = stream_context_create([
+        "http" => [
+            "method" => "GET",
+            "timeout" => 15,
+            "header" =>
+                "x-rapidapi-key: " . $whoisRapidApiKey . "\r\n" .
+                "x-rapidapi-host: " . $whoisRapidHost . "\r\n" .
+                "Accept: application/json\r\n",
+        ],
+    ]);
+
+    $raw = @file_get_contents($url, false, $context);
+    if ($raw === false || trim($raw) === "") {
+        http_response_code(502);
+        echo json_encode(["status" => "ERR", "msg" => "whois provider nicht erreichbar"]);
+        exit;
+    }
+
+    $parsed = json_decode($raw, true);
+    if (json_last_error() !== JSON_ERROR_NONE || !is_array($parsed)) {
+        http_response_code(502);
+        echo json_encode([
+            "status" => "ERR",
+            "msg" => "ungueltige provider-antwort",
+            "raw" => $raw,
+        ]);
+        exit;
+    }
+
+    echo json_encode([
+        "status" => "OK",
+        "mode" => $mode,
+        "target" => $targetLabel,
+        "provider" => "rapidapi-whois",
+        "result" => $parsed,
+    ]);
+    exit;
+}
 
 if (isset($_GET["rss"])) {
     $rssKey = strtolower(trim((string)($_GET["rss"] ?? "")));

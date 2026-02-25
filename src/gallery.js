@@ -161,6 +161,70 @@ const renderHub = async () => {
   }
 };
 
+const parseRaspiFirstImageFromContent = (content) => {
+  const html = String(content || "").trim();
+  if (!html) {
+    return "";
+  }
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(
+    `<div id="root">${html}</div>`,
+    "text/html",
+  );
+  const cards = Array.from(doc.querySelectorAll(".project-section-card"));
+  if (!cards.length) {
+    return "";
+  }
+  for (let i = cards.length - 1; i >= 0; i -= 1) {
+    const image =
+      cards[i].querySelector(".project-section-body img")?.src || "";
+    if (image) {
+      return image;
+    }
+  }
+  return "";
+};
+
+const renderRaspiPreviewIntoLabCard = async () => {
+  const raspiLink = document.querySelector('a.btn[href="/raspi.html"]');
+  const raspiCard = raspiLink?.closest(".gallery-hero-card");
+  const media = raspiCard?.querySelector(".gallery-hero-media");
+  if (!media) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}?page_content=1&page=raspi`, {
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const payload = await response.json();
+    if (String(payload?.status || "").toUpperCase() !== "OK") {
+      throw new Error(payload?.msg || "Unerwartete API-Antwort");
+    }
+
+    const imageUrl = parseRaspiFirstImageFromContent(payload?.content || "");
+    if (!imageUrl) {
+      return;
+    }
+
+    const image = document.createElement("img");
+    image.className = "gallery-hero-image";
+    image.loading = "lazy";
+    image.alt = "Raspi - Letzter Artikel";
+    image.src = imageUrl;
+
+    media.classList.remove("is-empty");
+    media.innerHTML = "";
+    media.appendChild(image);
+  } catch (error) {
+    console.error("Lab raspi preview failed:", error);
+  }
+};
+
 applyTheme(getPreferredTheme());
 
 if (themeToggleButton) {
@@ -180,3 +244,4 @@ prefersDark.addEventListener("change", (event) => {
 });
 
 renderHub();
+renderRaspiPreviewIntoLabCard();

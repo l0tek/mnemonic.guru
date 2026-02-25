@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>mnemonic.guru - esp32</title>
+        <title>mnemonic.guru - Tools</title>
     </head>
     <body class="gallery-page">
         <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
@@ -36,23 +36,13 @@
                             ></button>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
-                                    <a
-                                        class="dropdown-item"
-                                        href="/fraktale.html"
-                                        >Fraktale</a
-                                    >
+                                    <a class="dropdown-item" href="/fraktale.html">Fraktale</a>
                                 </li>
                                 <li>
-                                    <a
-                                        class="dropdown-item"
-                                        href="/digitalart.html"
-                                        >Digital Art</a
-                                    >
+                                    <a class="dropdown-item" href="/digitalart.html">Digital Art</a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="/fotos.html"
-                                        >Fotos</a
-                                    >
+                                    <a class="dropdown-item" href="/fotos.html">Fotos</a>
                                 </li>
                             </ul>
                         </li>
@@ -67,27 +57,23 @@
                             ></button>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
-                                    <a class="dropdown-item" href="/raspi.html"
-                                        >Raspi</a
-                                    >
+                                    <a class="dropdown-item" href="/raspi.html">Raspi</a>
                                 </li>
                                 <li>
-                                    <a
-                                        class="dropdown-item active"
-                                        aria-current="page"
-                                        href="/esp32.html"
-                                        >esp32</a
-                                    >
+                                    <a class="dropdown-item" href="/esp32.html">esp32</a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="/code.html"
-                                        >Code</a
-                                    >
+                                    <a class="dropdown-item" href="/code.html">Code</a>
                                 </li>
                             </ul>
                         </li>
                         <li class="nav-item dropdown d-flex align-items-center">
-                            <a class="nav-link" href="/tools.html">Tools</a>
+                            <a
+                                class="nav-link active"
+                                aria-current="page"
+                                href="/tools.html"
+                                >Tools</a
+                            >
                             <button
                                 class="btn btn-link nav-link dropdown-toggle px-2"
                                 type="button"
@@ -152,28 +138,34 @@
                                 type="button"
                                 aria-label="Zu Darkmode wechseln"
                             >
-                                <span class="theme-icon" aria-hidden="true"
-                                    >&#127769;</span
-                                >
+                                <span class="theme-icon" aria-hidden="true">&#127769;</span>
                             </button>
                         </li>
                     </ul>
                 </div>
             </div>
         </nav>
+
         <main class="container py-5">
-            <h1 class="h2">esp32</h1>
-            <section
-                class="mt-4"
-                id="page-editable-content"
-                data-page-key="esp32"
-            >
-                <!-- EDITABLE:START -->
-                <p></p>
-                <!-- EDITABLE:END -->
+            <header class="mb-4">
+                <p class="text-uppercase text-body-secondary fw-semibold mb-1">Tools</p>
+                <h1 class="display-6 fw-bold mb-2">Werkzeuge</h1>
+                <p class="text-body-secondary mb-0">Utility-Seiten fuer schnelle Abfragen.</p>
+            </header>
+
+            <section class="gallery-hero-grid" id="tools-hero-grid">
+                <article class="gallery-hero-card">
+                    <div class="gallery-hero-media is-empty"></div>
+                    <div class="gallery-hero-content">
+                        <h2 class="h3 fw-bold mb-2">Whois Lookup</h2>
+                        <p class="text-body-secondary mb-3">
+                            Domain-Whois Daten direkt ueber API-Abfrage.
+                        </p>
+                        <a class="btn btn-primary" href="/whois.html">Zu Whois</a>
+                    </div>
+                </article>
             </section>
         </main>
-        <script type="module" src="/src/main.js"></script>
+        <script type="module" src="/src/tools.js"></script>
     </body>
 </html>
-
