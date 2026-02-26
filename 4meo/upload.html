@@ -129,6 +129,75 @@
                             </p>
                         </div>
                     </div>
+
+                    <div class="card border-0 shadow-sm mt-4">
+                        <div class="card-body">
+                            <h2 class="h5 mb-3">p5.js Verzeichnis Upload</h2>
+                            <form
+                                id="admin-p5-upload-form"
+                                class="admin-upload-form"
+                            >
+                                <div class="mb-3">
+                                    <label
+                                        class="form-label"
+                                        for="upload-p5-project-name"
+                                        >Projektname</label
+                                    >
+                                    <input
+                                        id="upload-p5-project-name"
+                                        class="form-control"
+                                        name="project_name"
+                                        type="text"
+                                        placeholder="z. B. particle-playground"
+                                        required
+                                    />
+                                </div>
+                                <div class="mb-3">
+                                    <label
+                                        class="form-label"
+                                        for="upload-p5-directory"
+                                        >Verzeichnis</label
+                                    >
+                                    <input
+                                        id="upload-p5-directory"
+                                        class="form-control"
+                                        type="file"
+                                        webkitdirectory
+                                        directory
+                                        multiple
+                                        required
+                                    />
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input
+                                        id="upload-p5-replace"
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        name="replace"
+                                    />
+                                    <label
+                                        class="form-check-label"
+                                        for="upload-p5-replace"
+                                    >
+                                        Bestehendes Projekt gleichen Namens
+                                        ersetzen
+                                    </label>
+                                </div>
+                                <button
+                                    class="btn btn-primary w-100"
+                                    type="submit"
+                                >
+                                    Verzeichnis hochladen
+                                </button>
+                            </form>
+                            <p
+                                id="admin-p5-upload-status"
+                                class="small text-body-secondary mt-3 mb-0"
+                            >
+                                Lade ein komplettes p5.js Verzeichnis hoch.
+                            </p>
+                        </div>
+                    </div>
                 </section>
             </section>
         </main>

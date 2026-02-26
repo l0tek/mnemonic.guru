@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>mnemonic.guru - esp32</title>
+        <title>mnemonic.guru - p5.js</title>
     </head>
     <body class="gallery-page">
         <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
@@ -72,16 +72,19 @@
                                     >
                                 </li>
                                 <li>
-                                    <a
-                                        class="dropdown-item active"
-                                        aria-current="page"
-                                        href="/esp32.html"
+                                    <a class="dropdown-item" href="/esp32.html"
                                         >esp32</a
                                     >
                                 </li>
                             </ul>
-                        </li>                        <li class="nav-item dropdown d-flex align-items-center">
-                            <a class="nav-link" href="/code.html">Code</a>
+                        </li>
+                        <li class="nav-item dropdown d-flex align-items-center">
+                            <a
+                                class="nav-link active"
+                                aria-current="page"
+                                href="/code.html"
+                                >Code</a
+                            >
                             <button
                                 class="btn btn-link nav-link dropdown-toggle px-2"
                                 type="button"
@@ -91,7 +94,10 @@
                             ></button>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
-                                    <a class="dropdown-item" href="/p5js.html"
+                                    <a
+                                        class="dropdown-item active"
+                                        aria-current="page"
+                                        href="/p5js.html"
                                         >p5.js</a
                                     >
                                 </li>
@@ -108,7 +114,9 @@
                             ></button>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
-                                    <a class="dropdown-item" href="/whois.html">Whois</a>
+                                    <a class="dropdown-item" href="/whois.html"
+                                        >Whois</a
+                                    >
                                 </li>
                             </ul>
                         </li>
@@ -173,18 +181,105 @@
             </div>
         </nav>
         <main class="container py-5">
-            <h1 class="h2">esp32</h1>
-            <section
-                class="mt-4"
-                id="page-editable-content"
-                data-page-key="esp32"
+            <h1 class="h2">p5.js</h1>
+            <nav
+                class="nav nav-pills gap-2 mt-3 mb-4"
+                aria-label="Code Untermenue"
             >
-                <!-- EDITABLE:START -->
-                <p></p>
-                <!-- EDITABLE:END -->
-            </section>
+                <a class="nav-link" href="/code.html">Code</a>
+                <a class="nav-link active" aria-current="page" href="/p5js.html"
+                    >p5.js</a
+                >
+            </nav>
+            <p class="text-body-secondary mb-4">
+                p5.js ist eine JavaScript-Bibliothek fuer kreative, interaktive
+                Grafiken direkt im Browser. Sie ermoeglicht es, visuelle
+                Experimente, Animationen und datengesteuerte Visualisierungen
+                schnell umzusetzen - ohne komplexe Setup-Prozesse.
+            </p>
+            <p class="text-body-secondary mb-4">
+                Die folgenden Projekte zeigen, wie sich Code in Echtzeit in
+                Bewegung, Form und Interaktion uebersetzen laesst. Der Fokus
+                liegt auf klarer Logik, performanter Umsetzung und direkter
+                visueller Wirkung.
+            </p>
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h2 class="h5 mb-3">Projekte</h2>
+                            <div
+                                id="p5js-project-list"
+                                class="list-group p5js-project-list"
+                                role="listbox"
+                                aria-label="p5.js Projekte"
+                            ></div>
+                            <p
+                                id="p5js-project-status"
+                                class="small text-body-secondary mt-3 mb-0"
+                            >
+                                Lade Projekte...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div
+                                class="d-flex align-items-center justify-content-between gap-2 mb-3"
+                            >
+                                <h2 id="p5js-preview-title" class="h5 mb-0">
+                                    Vorschau
+                                </h2>
+                                <a
+                                    id="p5js-open-in-tab"
+                                    class="btn btn-sm btn-outline-primary d-none"
+                                    href="#"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    >Im neuen Tab</a
+                                >
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-xl-6">
+                                    <iframe
+                                        id="p5js-preview-frame"
+                                        class="p5js-preview-frame"
+                                        title="p5.js Vorschau"
+                                        loading="lazy"
+                                    ></iframe>
+                                </div>
+                                <div class="col-xl-6">
+                                    <section class="p5js-code-panel">
+                                        <div
+                                            class="d-flex justify-content-between align-items-center gap-2 mb-2"
+                                        >
+                                            <h3
+                                                id="p5js-code-title"
+                                                class="h6 mb-0"
+                                            >
+                                                Relevanter Quelltext
+                                            </h3>
+                                        </div>
+                                        <p
+                                            id="p5js-code-status"
+                                            class="small text-body-secondary mb-2"
+                                        >
+                                            Waehle ein Projekt.
+                                        </p>
+                                        <div
+                                            id="p5js-code-content"
+                                            class="p5js-code-content"
+                                        ></div>
+                                    </section>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </main>
-        <script type="module" src="/src/main.js"></script>
+        <script type="module" src="/src/p5js.js"></script>
     </body>
 </html>
-

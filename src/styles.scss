@@ -683,6 +683,110 @@ body.is-loading > :not(#page-loader) {
     margin-bottom: 0;
 }
 
+.p5js-project-list {
+    max-height: 32rem;
+    overflow: auto;
+}
+
+.p5js-preview-frame {
+    width: 100%;
+    min-height: 30rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 0.75rem;
+    background: #fff;
+}
+
+[data-bs-theme="light"] .p5js-preview-frame {
+    border-color: rgba(15, 23, 42, 0.14);
+}
+
+.p5js-code-panel {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(8, 13, 26, 0.58);
+    min-height: 30rem;
+    max-height: 30rem;
+    overflow: hidden;
+}
+
+[data-bs-theme="light"] .p5js-code-panel {
+    border-color: rgba(15, 23, 42, 0.12);
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.p5js-code-content {
+    display: grid;
+    gap: 0.75rem;
+    max-height: calc(30rem - 3.4rem);
+    overflow: auto;
+    padding-right: 0.2rem;
+}
+
+.p5js-code-block {
+    margin: 0;
+}
+
+.p5js-code-pre {
+    margin: 0;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 0.6rem;
+    background: rgba(6, 10, 20, 0.92);
+    color: #dbe9ff;
+    padding: 0.7rem;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    max-height: 16rem;
+    overflow: auto;
+}
+
+[data-bs-theme="light"] .p5js-code-pre {
+    border-color: rgba(15, 23, 42, 0.14);
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+.p5js-code-pre .tok-comment {
+    color: #7f95b5;
+}
+
+.p5js-code-pre .tok-string {
+    color: #86d39a;
+}
+
+.p5js-code-pre .tok-number {
+    color: #f7c97c;
+}
+
+.p5js-code-pre .tok-keyword {
+    color: #9fc3ff;
+    font-weight: 600;
+}
+
+.p5js-code-pre .tok-builtin {
+    color: #c39bff;
+}
+
+[data-bs-theme="light"] .p5js-code-pre .tok-comment {
+    color: #64748b;
+}
+
+[data-bs-theme="light"] .p5js-code-pre .tok-string {
+    color: #15803d;
+}
+
+[data-bs-theme="light"] .p5js-code-pre .tok-number {
+    color: #a16207;
+}
+
+[data-bs-theme="light"] .p5js-code-pre .tok-keyword {
+    color: #1d4ed8;
+}
+
+[data-bs-theme="light"] .p5js-code-pre .tok-builtin {
+    color: #7c3aed;
+}
+
 .whois-result {
     min-height: 280px;
     max-height: 65vh;

@@ -15,6 +15,7 @@ export default defineConfig({
         raspi: resolve(__dirname, "raspi.html"),
         esp32: resolve(__dirname, "esp32.html"),
         code: resolve(__dirname, "code.html"),
+        p5js: resolve(__dirname, "p5js.html"),
         tools: resolve(__dirname, "tools.html"),
         whois: resolve(__dirname, "whois.html"),
         news: resolve(__dirname, "news.html"),
