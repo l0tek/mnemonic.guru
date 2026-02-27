@@ -132,7 +132,7 @@
 
                     <div class="card border-0 shadow-sm mt-4">
                         <div class="card-body">
-                            <h2 class="h5 mb-3">p5.js Verzeichnis Upload</h2>
+                            <h2 class="h5 mb-3">p5.js Datei Upload</h2>
                             <form
                                 id="admin-p5-upload-form"
                                 class="admin-upload-form"
@@ -155,18 +155,45 @@
                                 <div class="mb-3">
                                     <label
                                         class="form-label"
-                                        for="upload-p5-directory"
-                                        >Verzeichnis</label
+                                        for="upload-p5-file"
+                                        >HTML Datei</label
                                     >
                                     <input
-                                        id="upload-p5-directory"
+                                        id="upload-p5-file"
                                         class="form-control"
                                         type="file"
-                                        webkitdirectory
-                                        directory
-                                        multiple
+                                        name="p5_file"
+                                        accept=".html,.htm,text/html"
                                         required
                                     />
+                                </div>
+                                <div class="mb-3">
+                                    <label
+                                        class="form-label"
+                                        for="upload-p5-description"
+                                        >Beschreibung</label
+                                    >
+                                    <textarea
+                                        id="upload-p5-description"
+                                        class="form-control"
+                                        name="description"
+                                        rows="4"
+                                        placeholder="Freitext zum Projekt"
+                                    ></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label
+                                        class="form-label"
+                                        for="upload-p5-snippets"
+                                        >Codeabschnitte (mit --- trennen)</label
+                                    >
+                                    <textarea
+                                        id="upload-p5-snippets"
+                                        class="form-control"
+                                        name="snippets"
+                                        rows="8"
+                                        placeholder="const speed = 2;&#10;function draw() {&#10;  ...&#10;}&#10;---&#10;function keyPressed() {&#10;  ...&#10;}"
+                                    ></textarea>
                                 </div>
                                 <div class="form-check mb-3">
                                     <input
@@ -187,14 +214,15 @@
                                     class="btn btn-primary w-100"
                                     type="submit"
                                 >
-                                    Verzeichnis hochladen
+                                    Datei hochladen
                                 </button>
                             </form>
                             <p
                                 id="admin-p5-upload-status"
                                 class="small text-body-secondary mt-3 mb-0"
                             >
-                                Lade ein komplettes p5.js Verzeichnis hoch.
+                                Lade genau eine HTML-Datei mit optionalem Text
+                                und Codeabschnitten hoch.
                             </p>
                         </div>
                     </div>

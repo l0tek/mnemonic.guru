@@ -12,9 +12,11 @@ const projectStatus = document.getElementById("p5js-project-status");
 const previewFrame = document.getElementById("p5js-preview-frame");
 const previewTitle = document.getElementById("p5js-preview-title");
 const openInTabLink = document.getElementById("p5js-open-in-tab");
+const openFullscreenButton = document.getElementById("p5js-open-fullscreen");
 const codeTitle = document.getElementById("p5js-code-title");
 const codeStatus = document.getElementById("p5js-code-status");
 const codeContent = document.getElementById("p5js-code-content");
+const projectDescription = document.getElementById("p5js-project-description");
 
 const getPreferredTheme = () => {
   const storedTheme = localStorage.getItem(STORAGE_KEY);
@@ -226,7 +228,6 @@ const renderCodeFile = (file) => {
   if (!codeContent) {
     return;
   }
-  codeContent.innerHTML = "";
   const wrapper = document.createElement("article");
   wrapper.className = "p5js-code-block";
 
@@ -247,13 +248,28 @@ const renderCodeFile = (file) => {
   codeContent.appendChild(wrapper);
 };
 
+const renderDescription = (text) => {
+  if (!projectDescription) {
+    return;
+  }
+  const value = String(text || "").trim();
+  if (!value) {
+    projectDescription.classList.add("d-none");
+    projectDescription.textContent = "";
+    return;
+  }
+  projectDescription.classList.remove("d-none");
+  projectDescription.textContent = value;
+};
+
 const loadProjectCode = async (entry) => {
   if (!codeContent || !codeTitle) {
     return;
   }
-  codeTitle.textContent = `${entry.name} - Relevanter Quelltext`;
+  codeTitle.textContent = `${entry.name} - Beschreibung und Quelltext`;
   setCodeStatus("Lade Quelltext...");
   codeContent.innerHTML = "";
+  renderDescription("");
   try {
     const response = await fetch(
       `${API_URL}?p5js_project_code=1&project=${encodeURIComponent(entry.slug)}`,
@@ -266,18 +282,24 @@ const loadProjectCode = async (entry) => {
     if (String(payload?.status || "").toUpperCase() !== "OK") {
       throw new Error(payload?.msg || "Unerwartete API-Antwort");
     }
-    const file = payload?.file;
-    if (
-      !file ||
-      String(file.path || "")
-        .toLowerCase()
-        .endsWith("sketch.js") === false
-    ) {
-      setCodeStatus("Keine relevante sketch.js gefunden.", "error");
+    renderDescription(payload?.description || entry?.description || "");
+
+    const snippets = Array.isArray(payload?.snippets) ? payload.snippets : [];
+    const files = snippets.length
+      ? snippets
+      : payload?.file
+        ? [payload.file]
+        : [];
+
+    if (!files.length) {
+      setCodeStatus("Keine Codeabschnitte vorhanden.");
       return;
     }
-    renderCodeFile(file);
-    setCodeStatus("sketch.js geladen.", "success");
+
+    files.forEach((file) => {
+      renderCodeFile(file);
+    });
+    setCodeStatus(`${files.length} Codeabschnitt(e) geladen.`, "success");
   } catch (error) {
     console.error("p5.js Quelltext konnte nicht geladen werden:", error);
     setCodeStatus(`Fehler beim Laden: ${error.message}`, "error");
@@ -299,6 +321,9 @@ const selectProject = async (entry, button, buttons) => {
   previewFrame.src = entryUrl;
   openInTabLink.href = entryUrl;
   openInTabLink.classList.remove("d-none");
+  if (openFullscreenButton) {
+    openFullscreenButton.classList.remove("d-none");
+  }
   await loadProjectCode(entry);
 };
 
@@ -370,3 +395,23 @@ prefersDark.addEventListener("change", (event) => {
 });
 
 loadProjects();
+
+if (openFullscreenButton && previewFrame) {
+  openFullscreenButton.addEventListener("click", async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        return;
+      }
+      if (typeof previewFrame.requestFullscreen === "function") {
+        await previewFrame.requestFullscreen();
+        return;
+      }
+      if (typeof previewFrame.webkitRequestFullscreen === "function") {
+        previewFrame.webkitRequestFullscreen();
+      }
+    } catch (error) {
+      console.error("Vollbildmodus fehlgeschlagen:", error);
+    }
+  });
+}

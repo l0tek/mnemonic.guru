@@ -44,6 +44,9 @@ $editablePages = [
 ];
 const THUMB_MAX_EDGE = 640;
 const P5_MAX_TOTAL_UPLOAD_BYTES = 50 * 1024 * 1024; // 50MB
+const P5_MAX_SNIPPETS = 12;
+const P5_MAX_SNIPPET_BYTES = 20000;
+const P5_MAX_DESCRIPTION_BYTES = 20000;
 
 function sanitizePathSegment(string $segment): string
 {
@@ -290,10 +293,13 @@ function listP5Projects(string $projectsDir, string $publicPrefix): array
         if ($entryUrl === "") {
             continue;
         }
+        $metadata = readP5ProjectMetadata($projectPath);
         $projects[] = [
             "slug" => $entry,
             "name" => ucwords((string)preg_replace("/[-_]+/", " ", $entry)),
             "entry_url" => $entryUrl,
+            "description" => (string)($metadata["description"] ?? ""),
+            "snippet_count" => count((array)($metadata["snippets"] ?? [])),
             "updated_at" => date(DATE_ATOM, @filemtime($projectPath) ?: time()),
         ];
     }
@@ -303,6 +309,102 @@ function listP5Projects(string $projectsDir, string $publicPrefix): array
     });
 
     return $projects;
+}
+
+function getP5ProjectMetadataPath(string $projectDir): string
+{
+    return rtrim($projectDir, "/") . "/project.json";
+}
+
+function sanitizeP5Description(string $raw): string
+{
+    $description = trim((string)$raw);
+    if ($description === "") {
+        return "";
+    }
+    if (strlen($description) > P5_MAX_DESCRIPTION_BYTES) {
+        $description = substr($description, 0, P5_MAX_DESCRIPTION_BYTES);
+    }
+    return trim($description);
+}
+
+function parseP5Snippets(string $raw): array
+{
+    $decoded = json_decode((string)$raw, true);
+    return sanitizeP5SnippetArray($decoded);
+}
+
+function sanitizeP5SnippetArray($decoded): array
+{
+    if (!is_array($decoded)) {
+        return [];
+    }
+    $snippets = [];
+    foreach ($decoded as $entry) {
+        if (!is_string($entry)) {
+            continue;
+        }
+        $snippet = trim($entry);
+        if ($snippet === "") {
+            continue;
+        }
+        if (strlen($snippet) > P5_MAX_SNIPPET_BYTES) {
+            $snippet = substr($snippet, 0, P5_MAX_SNIPPET_BYTES);
+        }
+        $snippets[] = $snippet;
+        if (count($snippets) >= P5_MAX_SNIPPETS) {
+            break;
+        }
+    }
+
+    return $snippets;
+}
+
+function readP5ProjectMetadata(string $projectDir): array
+{
+    $path = getP5ProjectMetadataPath($projectDir);
+    if (!is_file($path)) {
+        return [
+            "description" => "",
+            "snippets" => [],
+        ];
+    }
+
+    $raw = @file_get_contents($path);
+    if ($raw === false || trim($raw) === "") {
+        return [
+            "description" => "",
+            "snippets" => [],
+        ];
+    }
+
+    $decoded = json_decode($raw, true);
+    if (!is_array($decoded)) {
+        return [
+            "description" => "",
+            "snippets" => [],
+        ];
+    }
+
+    return [
+        "description" => sanitizeP5Description((string)($decoded["description"] ?? "")),
+        "snippets" => sanitizeP5SnippetArray($decoded["snippets"] ?? []),
+    ];
+}
+
+function writeP5ProjectMetadata(string $projectDir, string $description, array $snippets): bool
+{
+    $path = getP5ProjectMetadataPath($projectDir);
+    $payload = [
+        "description" => sanitizeP5Description($description),
+        "snippets" => array_values($snippets),
+        "updated_at" => date(DATE_ATOM),
+    ];
+    $encoded = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    if ($encoded === false) {
+        return false;
+    }
+    return @file_put_contents($path, $encoded) !== false;
 }
 
 function extractEditableContentFromHtml(string $rawHtml): string
@@ -614,53 +716,166 @@ if (isset($_GET["p5js_project_code"])) {
         exit;
     }
 
-    $entryRelativePath = resolveP5EntryRelativePath($projectDir);
-    if ($entryRelativePath === "") {
-        http_response_code(404);
-        echo json_encode(["status" => "ERR", "msg" => "kein einstiegspunkt gefunden"]);
-        exit;
+    $metadata = readP5ProjectMetadata($projectDir);
+    $snippets = [];
+    $metadataSnippets = is_array($metadata["snippets"] ?? null) ? $metadata["snippets"] : [];
+    foreach ($metadataSnippets as $idx => $snippetContent) {
+        $snippets[] = [
+            "path" => "Snippet " . ($idx + 1),
+            "language" => "javascript",
+            "content" => (string)$snippetContent,
+        ];
     }
 
-    $entryAbsolutePath = $projectDir . "/" . $entryRelativePath;
-    $entryContent = @file_get_contents($entryAbsolutePath);
-    if ($entryContent === false) {
-        http_response_code(500);
-        echo json_encode(["status" => "ERR", "msg" => "einstiegspunkt konnte nicht gelesen werden"]);
-        exit;
-    }
-
-    $sketchRelativePath = findRelevantSketchRelativePath(
-        $projectDir,
-        $entryRelativePath,
-        (string)$entryContent
-    );
-    if ($sketchRelativePath === "") {
-        http_response_code(404);
-        echo json_encode(["status" => "ERR", "msg" => "keine sketch.js gefunden"]);
-        exit;
-    }
-    $sketchAbsolutePath = $projectDir . "/" . $sketchRelativePath;
-    $sketchContent = @file_get_contents($sketchAbsolutePath);
-    if ($sketchContent === false) {
-        http_response_code(500);
-        echo json_encode(["status" => "ERR", "msg" => "sketch.js konnte nicht gelesen werden"]);
-        exit;
-    }
-
-    echo json_encode([
+    $response = [
         "status" => "OK",
         "project" => $projectSlug,
-        "file" => [
-            "path" => $sketchRelativePath,
-            "language" => "javascript",
-            "content" => (string)$sketchContent,
-        ],
-    ]);
+        "description" => (string)($metadata["description"] ?? ""),
+        "snippets" => $snippets,
+    ];
+
+    $entryRelativePath = resolveP5EntryRelativePath($projectDir);
+    if ($entryRelativePath !== "") {
+        $entryAbsolutePath = $projectDir . "/" . $entryRelativePath;
+        $entryContent = @file_get_contents($entryAbsolutePath);
+        if ($entryContent !== false) {
+            $sketchRelativePath = findRelevantSketchRelativePath(
+                $projectDir,
+                $entryRelativePath,
+                (string)$entryContent
+            );
+            if ($sketchRelativePath !== "") {
+                $sketchAbsolutePath = $projectDir . "/" . $sketchRelativePath;
+                $sketchContent = @file_get_contents($sketchAbsolutePath);
+                if ($sketchContent !== false) {
+                    $response["file"] = [
+                        "path" => $sketchRelativePath,
+                        "language" => "javascript",
+                        "content" => (string)$sketchContent,
+                    ];
+                }
+            }
+        }
+    }
+
+    echo json_encode($response);
     exit;
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $action = strtolower(trim((string)($_POST["action"] ?? "")));
+    if ($action === "upload_p5_file") {
+        $projectNameRaw = trim((string)($_POST["project_name"] ?? ""));
+        $projectNameSafe = sanitizePathSegment($projectNameRaw);
+        if ($projectNameSafe === "") {
+            $projectNameSafe = "p5-projekt";
+        }
+        $projectNameLower = function_exists("mb_strtolower")
+            ? mb_strtolower($projectNameSafe, "UTF-8")
+            : strtolower($projectNameSafe);
+        $projectSlug = (string)preg_replace("/[^a-z0-9]+/", "-", $projectNameLower);
+        $projectSlug = trim($projectSlug, "-");
+        if ($projectSlug === "") {
+            $projectSlug = "p5-projekt";
+        }
+
+        $replace = strtolower(trim((string)($_POST["replace"] ?? "")));
+        $shouldReplace = in_array($replace, ["1", "true", "yes", "on"], true);
+        $file = $_FILES["file"] ?? ($_FILES["p5_file"] ?? null);
+        if (!is_array($file) || !isset($file["tmp_name"])) {
+            http_response_code(400);
+            echo json_encode(["status" => "ERR", "msg" => "keine datei im feld file"]);
+            exit;
+        }
+
+        $uploadError = (int)($file["error"] ?? UPLOAD_ERR_NO_FILE);
+        if ($uploadError !== UPLOAD_ERR_OK) {
+            http_response_code(400);
+            echo json_encode(["status" => "ERR", "msg" => "datei konnte nicht hochgeladen werden"]);
+            exit;
+        }
+
+        $size = (int)($file["size"] ?? 0);
+        if ($size <= 0 || $size > MAX_UPLOAD_BYTES) {
+            http_response_code(413);
+            echo json_encode(["status" => "ERR", "msg" => "ungueltige dateigroesse"]);
+            exit;
+        }
+
+        $tmpName = (string)($file["tmp_name"] ?? "");
+        if ($tmpName === "" || !is_uploaded_file($tmpName)) {
+            http_response_code(400);
+            echo json_encode(["status" => "ERR", "msg" => "ungueltige upload-temp-datei"]);
+            exit;
+        }
+
+        $originalName = trim((string)($file["name"] ?? ""));
+        $extension = strtolower((string)pathinfo($originalName, PATHINFO_EXTENSION));
+        if (!in_array($extension, ["html", "htm"], true)) {
+            http_response_code(415);
+            echo json_encode(["status" => "ERR", "msg" => "nur html dateien sind erlaubt"]);
+            exit;
+        }
+
+        if (!is_dir($p5ProjectsDir) && !@mkdir($p5ProjectsDir, 0755, true) && !is_dir($p5ProjectsDir)) {
+            http_response_code(500);
+            echo json_encode(["status" => "ERR", "msg" => "p5js basisverzeichnis konnte nicht erstellt werden"]);
+            exit;
+        }
+
+        $projectDir = rtrim($p5ProjectsDir, "/") . "/" . $projectSlug;
+        if (is_dir($projectDir)) {
+            if (!$shouldReplace) {
+                http_response_code(409);
+                echo json_encode(["status" => "ERR", "msg" => "projektverzeichnis existiert bereits"]);
+                exit;
+            }
+            if (!removeDirectoryRecursive($projectDir)) {
+                http_response_code(500);
+                echo json_encode(["status" => "ERR", "msg" => "bestehendes verzeichnis konnte nicht ersetzt werden"]);
+                exit;
+            }
+        }
+
+        if (!@mkdir($projectDir, 0755, true) && !is_dir($projectDir)) {
+            http_response_code(500);
+            echo json_encode(["status" => "ERR", "msg" => "projektverzeichnis konnte nicht erstellt werden"]);
+            exit;
+        }
+
+        $target = $projectDir . "/index.html";
+        if (!@move_uploaded_file($tmpName, $target)) {
+            removeDirectoryRecursive($projectDir);
+            http_response_code(500);
+            echo json_encode(["status" => "ERR", "msg" => "datei konnte nicht gespeichert werden"]);
+            exit;
+        }
+
+        $description = (string)($_POST["description"] ?? "");
+        $snippets = parseP5Snippets((string)($_POST["snippets"] ?? "[]"));
+        if (!writeP5ProjectMetadata($projectDir, $description, $snippets)) {
+            removeDirectoryRecursive($projectDir);
+            http_response_code(500);
+            echo json_encode(["status" => "ERR", "msg" => "projektmetadaten konnten nicht gespeichert werden"]);
+            exit;
+        }
+
+        $entryUrl = resolveP5EntryPublicPath($projectDir, $projectSlug, $p5ProjectsPublicPrefix);
+        if ($entryUrl === "") {
+            removeDirectoryRecursive($projectDir);
+            http_response_code(400);
+            echo json_encode(["status" => "ERR", "msg" => "kein html einstiegspunkt gefunden"]);
+            exit;
+        }
+
+        echo json_encode([
+            "status" => "OK",
+            "project" => $projectSlug,
+            "entry_url" => $entryUrl,
+        ]);
+        exit;
+    }
+
     if ($action === "upload_p5_directory") {
         $projectNameRaw = trim((string)($_POST["project_name"] ?? ""));
         $projectNameSafe = sanitizePathSegment($projectNameRaw);

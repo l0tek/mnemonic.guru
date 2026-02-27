@@ -521,6 +521,10 @@ body.is-loading > :not(#page-loader) {
     min-height: 2.75rem;
 }
 
+.admin-upload-form textarea.form-control {
+    min-height: 8rem;
+}
+
 .admin-editor .ql-toolbar.ql-snow,
 .admin-editor .ql-container.ql-snow {
     border-color: rgba(255, 255, 255, 0.2);
@@ -715,12 +719,31 @@ body.is-loading > :not(#page-loader) {
     background: rgba(255, 255, 255, 0.85);
 }
 
+.p5js-project-description {
+    border-radius: 0.55rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(7, 12, 25, 0.45);
+    padding: 0.55rem 0.65rem;
+}
+
+[data-bs-theme="light"] .p5js-project-description {
+    border-color: rgba(15, 23, 42, 0.12);
+    background: rgba(255, 255, 255, 0.8);
+}
+
 .p5js-code-content {
     display: grid;
     gap: 0.75rem;
     max-height: calc(30rem - 3.4rem);
     overflow: auto;
     padding-right: 0.2rem;
+}
+
+.p5js-preview-frame:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    border: 0;
 }
 
 .p5js-code-block {

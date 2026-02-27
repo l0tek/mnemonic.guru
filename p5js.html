@@ -232,14 +232,23 @@
                                 <h2 id="p5js-preview-title" class="h5 mb-0">
                                     Vorschau
                                 </h2>
-                                <a
-                                    id="p5js-open-in-tab"
-                                    class="btn btn-sm btn-outline-primary d-none"
-                                    href="#"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    >Im neuen Tab</a
-                                >
+                                <div class="d-flex gap-2">
+                                    <button
+                                        id="p5js-open-fullscreen"
+                                        class="btn btn-sm btn-outline-secondary d-none"
+                                        type="button"
+                                    >
+                                        Vollbild
+                                    </button>
+                                    <a
+                                        id="p5js-open-in-tab"
+                                        class="btn btn-sm btn-outline-primary d-none"
+                                        href="#"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        >Im neuen Tab</a
+                                    >
+                                </div>
                             </div>
                             <div class="row g-3">
                                 <div class="col-xl-6">
@@ -259,9 +268,13 @@
                                                 id="p5js-code-title"
                                                 class="h6 mb-0"
                                             >
-                                                Relevanter Quelltext
+                                                Beschreibung und Quelltext
                                             </h3>
                                         </div>
+                                        <p
+                                            id="p5js-project-description"
+                                            class="small mb-2 d-none"
+                                        ></p>
                                         <p
                                             id="p5js-code-status"
                                             class="small text-body-secondary mb-2"
