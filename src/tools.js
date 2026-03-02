@@ -1,5 +1,6 @@
-import "./styles.scss";
+﻿import "./styles.scss";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import "./nav-dropdowns.js";
 
 const STORAGE_KEY = "theme-preference";
 const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");

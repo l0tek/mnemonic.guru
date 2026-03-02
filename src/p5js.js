@@ -1,5 +1,6 @@
-import "./styles.scss";
+﻿import "./styles.scss";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import "./nav-dropdowns.js";
 import { js as beautifyJs } from "js-beautify";
 
 const STORAGE_KEY = "theme-preference";

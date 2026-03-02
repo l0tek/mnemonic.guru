@@ -1,5 +1,6 @@
-import "./styles.scss";
+﻿import "./styles.scss";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import "./nav-dropdowns.js";
 import "blueimp-gallery/js/blueimp-helper.js";
 import "blueimp-gallery/js/blueimp-gallery.js";
 import "blueimp-gallery/css/blueimp-gallery.min.css";

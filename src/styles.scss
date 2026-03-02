@@ -1,4 +1,4 @@
-// 1) Bootstrap functions zuerst
+﻿// 1) Bootstrap functions zuerst
 @import "bootstrap/scss/functions";
 
 // 2) Deine Overrides (vor variables)
@@ -826,4 +826,54 @@ body.is-loading > :not(#page-loader) {
     background: rgba(255, 255, 255, 0.85);
     border-color: rgba(15, 23, 42, 0.12) !important;
     color: #0f172a;
+}
+
+.dropdown-submenu {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.dropdown-submenu .dropdown-item {
+    flex: 1 1 auto;
+}
+
+.dropdown-submenu .nav-submenu-toggle {
+    padding: var(--bs-dropdown-item-padding-y) var(--bs-dropdown-item-padding-x);
+    color: var(--bs-dropdown-link-color);
+    border: 0;
+    text-decoration: none;
+}
+
+.dropdown-submenu .nav-submenu-toggle:hover,
+.dropdown-submenu .nav-submenu-toggle:focus {
+    color: var(--bs-dropdown-link-hover-color);
+    background-color: var(--bs-dropdown-link-hover-bg);
+}
+
+.dropdown-submenu > .dropdown-menu {
+    top: 0;
+    left: 100%;
+    margin-top: 0;
+}
+
+@media (min-width: 992px) {
+    .dropdown-submenu:hover > .dropdown-menu {
+        display: block;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .dropdown-submenu {
+        flex-wrap: wrap;
+    }
+
+    .dropdown-submenu > .dropdown-menu {
+        position: static;
+        transform: none !important;
+        inset: auto;
+        margin-left: 1rem;
+        border: 0;
+        box-shadow: none;
+    }
 }

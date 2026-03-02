@@ -1,5 +1,6 @@
 import "./styles.scss";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import "./nav-dropdowns.js";
 import * as THREE from "three";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 
