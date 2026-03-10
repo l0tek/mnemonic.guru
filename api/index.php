@@ -1298,6 +1298,7 @@ $rssFeeds = [
     "telepolis" => "https://www.telepolis.de/news-atom.xml",
 ];
 
+$rdapIpBootstrapUrl = "https://rdap-bootstrap.arin.net/bootstrap/ip";
 $whoisRapidHost = "zozor54-whois-lookup-v1.p.rapidapi.com";
 $whoisRapidApiUrl = "https://zozor54-whois-lookup-v1.p.rapidapi.com/";
 $whoisRapidApiKey = getenv("RAPIDAPI_WHOIS_KEY") ?: "177394671amsh7d26c6624bc7d58p1e3590jsn7c8595e22d85";
@@ -1310,14 +1311,9 @@ if (isset($_GET["whois"])) {
         exit;
     }
 
-    if (trim($whoisRapidApiKey) === "") {
-        http_response_code(500);
-        echo json_encode(["status" => "ERR", "msg" => "rapidapi key fehlt"]);
-        exit;
-    }
-
     $targetLabel = "";
     $url = "";
+    $headers = "Accept: application/json\r\n";
     if ($mode === "reverse") {
         $ip = trim((string)($_GET["ip"] ?? ""));
         if ($ip === "") {
@@ -1331,10 +1327,13 @@ if (isset($_GET["whois"])) {
             exit;
         }
         $targetLabel = $ip;
-        $url = "https://zozor54-whois-lookup-v1.p.rapidapi.com/reverseWhois?" . http_build_query([
-            "ip" => $ip,
-        ]);
+        $url = $rdapIpBootstrapUrl . "/" . rawurlencode($ip);
     } else {
+        if (trim($whoisRapidApiKey) === "") {
+            http_response_code(500);
+            echo json_encode(["status" => "ERR", "msg" => "rapidapi key fehlt"]);
+            exit;
+        }
         $domain = strtolower(trim((string)($_GET["domain"] ?? "")));
         if ($domain === "") {
             http_response_code(400);
@@ -1352,23 +1351,56 @@ if (isset($_GET["whois"])) {
             "format" => "json",
             "_forceRefresh" => "0",
         ]);
+        $headers =
+            "x-rapidapi-key: " . $whoisRapidApiKey . "\r\n" .
+            "x-rapidapi-host: " . $whoisRapidHost . "\r\n" .
+            "Accept: application/json\r\n";
     }
 
     $context = stream_context_create([
         "http" => [
             "method" => "GET",
             "timeout" => 15,
-            "header" =>
-                "x-rapidapi-key: " . $whoisRapidApiKey . "\r\n" .
-                "x-rapidapi-host: " . $whoisRapidHost . "\r\n" .
-                "Accept: application/json\r\n",
+            "ignore_errors" => true,
+            "follow_location" => 1,
+            "max_redirects" => 5,
+            "header" => $mode === "reverse"
+                ? "Accept: application/rdap+json, application/json\r\n"
+                : $headers,
         ],
     ]);
 
+    $providerStatusCode = 0;
     $raw = @file_get_contents($url, false, $context);
-    if ($raw === false || trim($raw) === "") {
+    $providerHeaders = isset($http_response_header) && is_array($http_response_header)
+        ? $http_response_header
+        : [];
+    foreach ($providerHeaders as $providerHeaderLine) {
+        if (preg_match('/^HTTP\/\S+\s+(\d{3})\b/', (string)$providerHeaderLine, $matches)) {
+            $providerStatusCode = (int)$matches[1];
+            break;
+        }
+    }
+
+    if ($raw === false) {
         http_response_code(502);
-        echo json_encode(["status" => "ERR", "msg" => "whois provider nicht erreichbar"]);
+        echo json_encode([
+            "status" => "ERR",
+            "msg" => "whois provider request fehlgeschlagen",
+            "provider_status" => $providerStatusCode,
+            "provider_url" => $url,
+        ]);
+        exit;
+    }
+
+    if (trim($raw) === "") {
+        http_response_code(502);
+        echo json_encode([
+            "status" => "ERR",
+            "msg" => "whois provider hat leer geantwortet",
+            "provider_status" => $providerStatusCode,
+            "provider_url" => $url,
+        ]);
         exit;
     }
 
@@ -1378,7 +1410,33 @@ if (isset($_GET["whois"])) {
         echo json_encode([
             "status" => "ERR",
             "msg" => "ungueltige provider-antwort",
-            "raw" => $raw,
+            "provider_status" => $providerStatusCode,
+            "provider_url" => $url,
+            "provider_raw" => mb_substr($raw, 0, 1000),
+        ]);
+        exit;
+    }
+
+    $providerErrorMessage = "";
+    foreach (["msg", "message", "error", "detail", "description"] as $providerErrorKey) {
+        if (isset($parsed[$providerErrorKey]) && is_scalar($parsed[$providerErrorKey])) {
+            $providerErrorMessage = trim((string)$parsed[$providerErrorKey]);
+            if ($providerErrorMessage !== "") {
+                break;
+            }
+        }
+    }
+
+    if ($providerStatusCode >= 400) {
+        http_response_code(502);
+        echo json_encode([
+            "status" => "ERR",
+            "msg" => $providerErrorMessage !== ""
+                ? "whois provider fehler: " . $providerErrorMessage
+                : "whois provider fehler",
+            "provider_status" => $providerStatusCode,
+            "provider_url" => $url,
+            "provider_response" => $parsed,
         ]);
         exit;
     }
@@ -1387,7 +1445,7 @@ if (isset($_GET["whois"])) {
         "status" => "OK",
         "mode" => $mode,
         "target" => $targetLabel,
-        "provider" => "rapidapi-whois",
+        "provider" => $mode === "reverse" ? "rdap.org" : "rapidapi-whois",
         "result" => $parsed,
     ]);
     exit;

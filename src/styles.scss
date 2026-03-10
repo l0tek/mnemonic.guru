@@ -828,6 +828,98 @@ body.is-loading > :not(#page-loader) {
     color: #0f172a;
 }
 
+.gc-tools-hero {
+    max-width: 52rem;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.gc-tools-shell {
+    display: grid;
+}
+
+.gc-tools-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(18rem, 0.9fr);
+    gap: 1.25rem;
+}
+
+.gc-tools-pane,
+.gc-tools-sidebar {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.gc-tools-textarea {
+    min-height: 15rem;
+    resize: vertical;
+    font-family:
+        Consolas, Monaco, "Lucida Console", "Liberation Mono", "Courier New",
+        monospace;
+    letter-spacing: 0.03em;
+}
+
+.gc-tools-field.hidden {
+    display: none;
+}
+
+.gc-tools-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding-top: 0.25rem;
+}
+
+.gc-tools-help {
+    background: rgba(8, 13, 26, 0.58);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+[data-bs-theme="light"] .gc-tools-help {
+    background: rgba(255, 255, 255, 0.82);
+    border-color: rgba(15, 23, 42, 0.12);
+}
+
+.gc-tools-method-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+}
+
+.gc-tools-method-chip {
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    padding: 0.38rem 0.72rem;
+    background: rgba(255, 255, 255, 0.06);
+    color: inherit;
+    font-size: 0.82rem;
+    line-height: 1.15;
+}
+
+.gc-tools-method-chip:hover,
+.gc-tools-method-chip:focus-visible {
+    background: rgba(79, 70, 229, 0.18);
+    border-color: rgba(99, 102, 241, 0.38);
+}
+
+.gc-tools-method-chip.is-muted {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+[data-bs-theme="light"] .gc-tools-method-chip {
+    border-color: rgba(15, 23, 42, 0.12);
+    background: rgba(15, 23, 42, 0.04);
+}
+
+@media (max-width: 991.98px) {
+    .gc-tools-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .dropdown-submenu {
     position: relative;
     display: flex;

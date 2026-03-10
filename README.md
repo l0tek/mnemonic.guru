@@ -1,26 +1,28 @@
 # mnemonic.guru
 
-Interaktive Landingpage mit Vite, Bootstrap und Sass.
+Mehrseitige Website mit Vite, Bootstrap, Sass und Vanilla JavaScript.
 
 ## Features
 
-- Fullscreen Hero (`min-vh-100`) mit modernem Gradient-Hintergrund
-- Canvas-Netzwerkanimation (`#spiders`) mit Mausinteraktion
-- Darkmode/Lightmode Toggle (Sonne/Mond)
-- Theme-Persistenz per `localStorage`
-- Responsive Navigation mit Bootstrap Collapse
+- mehrere statische Seiten mit gemeinsamer Navigation
+- Darkmode/Lightmode mit Persistenz per `localStorage`
+- Tool-Bereich mit `Whois` und `Crypto`
+- responsive Layouts auf Basis von Bootstrap 5
+- SCSS-basierte zentrale Styles
 
 ## Tech Stack
 
 - Vite
-- Bootstrap 5 (SCSS + JS Bundle)
+- Bootstrap 5
 - Sass
 - Vanilla JavaScript
+- PHP fuer API-Endpunkte
 
 ## Voraussetzungen
 
-- Node.js 18+ (empfohlen)
+- Node.js 18+
 - npm
+- PHP, wenn die lokalen API-Endpunkte getestet werden sollen
 
 ## Installation
 
@@ -34,13 +36,13 @@ npm install
 npm run dev
 ```
 
-## Production Build
+## Build
 
 ```bash
 npm run build
 ```
 
-## Build lokal testen
+## Preview
 
 ```bash
 npm run preview
@@ -50,16 +52,20 @@ npm run preview
 
 ```text
 .
-├─ index.html
-├─ src/
-│  ├─ main.js
-│  └─ styles.scss
-├─ package.json
-└─ vite.config.js
+|-- index.html
+|-- tools.html
+|-- whois.html
+|-- gctools.html
+|-- api/
+|   `-- index.php
+|-- src/
+|   |-- main.js
+|   |-- gctools.js
+|   |-- whois.js
+|   `-- styles.scss
+`-- vite.config.js
 ```
 
 ## Hinweise
 
-- Die Canvas-Animation läuft kontinuierlich und reagiert auf Mausposition.
-- Bei Scrollen unterhalb der Hero-Höhe wird die Zeichenlogik pausiert.
-- Sass zeigt aktuell Deprecation-Warnungen aus Bootstrap-Imports (`@import`), der Build ist dennoch erfolgreich.
+- Der Build laeuft aktuell trotz Bootstrap-Sass-Deprecation-Warnungen sauber durch.

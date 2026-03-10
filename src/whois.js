@@ -42,10 +42,15 @@ const setStatus = (text, tone = "neutral") => {
   whoisStatus.classList.remove(
     "text-success",
     "text-danger",
+    "text-warning",
     "text-body-secondary",
   );
   if (tone === "success") {
     whoisStatus.classList.add("text-success");
+    return;
+  }
+  if (tone === "warning") {
+    whoisStatus.classList.add("text-warning");
     return;
   }
   if (tone === "error") {
@@ -73,6 +78,16 @@ const normalizeDomain = (value) => {
 
 const normalizeIp = (value) => {
   return String(value || "").trim();
+};
+
+const isEmptyResult = (value) => {
+  if (Array.isArray(value)) {
+    return value.length === 0;
+  }
+  if (value && typeof value === "object") {
+    return Object.keys(value).length === 0;
+  }
+  return value == null || value === "";
 };
 
 const applyWhoisModeUi = () => {
@@ -143,8 +158,8 @@ if (whoisForm && whoisDomainInput) {
 
     setStatus(
       mode === "reverse"
-        ? "Reverse Whois wird geladen ..."
-        : "Whois wird geladen ...",
+        ? "IP-Whois wird geladen ..."
+        : "Domain-Whois wird geladen ...",
     );
     setResult("");
 
@@ -165,16 +180,31 @@ if (whoisForm && whoisDomainInput) {
       }
 
       setResult(JSON.stringify(payload.result, null, 2));
+      if (isEmptyResult(payload.result)) {
+        if (mode === "reverse") {
+          setStatus(
+            `Fuer die IP ${queryValue} wurden keine RDAP-Daten gefunden.`,
+            "warning",
+          );
+        } else {
+          setStatus(
+            `Keine Domain-Whois-Daten fuer ${queryValue} gefunden.`,
+            "warning",
+          );
+        }
+        return;
+      }
+
       if (mode === "reverse") {
-        setStatus(`Reverse Whois fuer ${queryValue} geladen.`, "success");
+        setStatus(`IP-Whois fuer ${queryValue} geladen.`, "success");
       } else {
-        setStatus(`Whois fuer ${queryValue} geladen.`, "success");
+        setStatus(`Domain-Whois fuer ${queryValue} geladen.`, "success");
       }
     } catch (error) {
       setStatus(
         mode === "reverse"
-          ? `Reverse Whois fehlgeschlagen: ${error.message}`
-          : `Whois fehlgeschlagen: ${error.message}`,
+          ? `IP-Whois fehlgeschlagen: ${error.message}`
+          : `Domain-Whois fehlgeschlagen: ${error.message}`,
         "error",
       );
       setResult("");

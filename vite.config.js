@@ -17,6 +17,7 @@ export default defineConfig({
         code: resolve(__dirname, "code.html"),
         p5js: resolve(__dirname, "p5js.html"),
         tools: resolve(__dirname, "tools.html"),
+        gctools: resolve(__dirname, "gctools.html"),
         whois: resolve(__dirname, "whois.html"),
         news: resolve(__dirname, "news.html"),
         adminDashboard: resolve(__dirname, "4meo/index.html"),
