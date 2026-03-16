@@ -1,8 +1,10 @@
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
+
 export const STORAGE_KEY = "theme-preference";
 export const ADMIN_AUTH_KEY = "admin-authenticated";
 export const ADMIN_PASSWORD_HASH =
   "7da6572f4d3e3ad6f33e4612d9b2b3228936bd4a3d4bae5e4aaa8c17f86588b9";
-export const API_URL = "https://www.mnemonic.guru/api/index.php";
+export const API_URL = new URL("/api/index.php", window.location.origin).toString();
 
 const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
 

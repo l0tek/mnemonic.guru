@@ -22,6 +22,11 @@ const projectSummaryInput = document.getElementById("project-summary");
 let editorInstance = null;
 let projects = [];
 let activeProjectIndex = -1;
+const requestedEditorPage = String(
+  new URLSearchParams(window.location.search).get("page") || "",
+)
+  .trim()
+  .toLowerCase();
 const apiOrigin = (() => {
   try {
     return new URL(API_URL).origin;
@@ -341,6 +346,13 @@ const loadEditablePage = async () => {
   }
 };
 
+if (
+  editorPageSelect &&
+  ["raspi", "esp32", "code", "howto"].includes(requestedEditorPage)
+) {
+  editorPageSelect.value = requestedEditorPage;
+}
+
 initEditor();
 initAdminShell({
   onAuthenticated: () => {
@@ -377,6 +389,12 @@ if (editorForm && editorPageSelect && editorLoadButton) {
     loadEditablePage();
   });
   editorPageSelect.addEventListener("change", () => {
+    const nextUrl = new URL(window.location.href);
+    nextUrl.searchParams.set(
+      "page",
+      String(editorPageSelect.value || "").trim().toLowerCase(),
+    );
+    window.history.replaceState({}, "", nextUrl);
     loadEditablePage();
   });
   editorForm.addEventListener("submit", async (event) => {

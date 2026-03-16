@@ -3,181 +3,126 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>mnemonic.guru - Admin Editor</title>
+        <title>mnemonic.guru - Admin</title>
     </head>
     <body class="admin-page">
-        <main class="container-fluid py-5 px-3 px-lg-4">
-            <section class="admin-shell admin-shell--wide mx-auto">
-                <div
-                    class="d-flex justify-content-between align-items-center mb-4"
+
+        <nav class="admin-navbar admin-navbar--top navbar navbar-expand-lg" aria-label="Admin Navigation">
+            <div class="container admin-navbar-inner">
+                <a class="navbar-brand admin-navbar-brand" href="/4meo/index.html">
+                    <span class="admin-navbar-kicker">mnemonic.guru</span>
+                    <span class="admin-navbar-title">Admin</span>
+                </a>
+                <button
+                    class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#admin-navbar-nav"
+                    aria-controls="admin-navbar-nav"
+                    aria-expanded="false"
+                    aria-label="Admin Navigation umschalten"
                 >
-                    <div>
-                        <p
-                            class="text-uppercase text-body-secondary fw-semibold mb-1"
-                        >
-                            Restricted
-                        </p>
-                        <h1 class="h3 mb-0">Admin Bereich</h1>
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="admin-navbar-nav">
+                    <ul class="navbar-nav gap-lg-2 me-lg-auto mb-3 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/4meo/index.html">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/4meo/upload.html">Uploads</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="/4meo/editor.html">Editor</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/4meo/editor.html?page=howto">Howto bearbeiten</a>
+                        </li>
+                    </ul>
+                    <div class="admin-navbar-meta">
+                        <strong>Editor</strong>
+                        <span>Editierbare Seiten verwalten</span>
                     </div>
                     <button
                         id="theme-toggle"
-                        class="btn btn-outline-secondary theme-toggle"
+                        class="btn btn-outline-secondary theme-toggle admin-navbar-theme"
                         type="button"
                         aria-label="Zu Darkmode wechseln"
                     >
-                        <span class="theme-icon" aria-hidden="true"
-                            >&#127769;</span
-                        >
+                        <span class="theme-icon" aria-hidden="true">&#127769;</span>
                     </button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="container-fluid py-5 px-3 px-lg-4">
+            <section class="admin-shell admin-shell--wide mx-auto">
+                <div class="mb-4">
+                    <p class="text-uppercase text-body-secondary fw-semibold mb-1">
+                        Restricted
+                    </p>
+                    <h1 class="h3 mb-0">Admin Bereich</h1>
                 </div>
 
                 <form id="admin-login-form" class="admin-login-form">
-                    <label class="form-label" for="admin-password"
-                        >Passwort</label
-                    >
-                    <input
-                        id="admin-password"
-                        class="form-control"
-                        type="password"
-                        autocomplete="current-password"
-                        required
-                    />
-                    <button class="btn btn-primary w-100 mt-3" type="submit">
-                        Anmelden
-                    </button>
-                    <p
-                        id="admin-login-error"
-                        class="text-danger small mt-2 mb-0 d-none"
-                    >
-                        Passwort ist falsch.
-                    </p>
+                    <label class="form-label" for="admin-password">Passwort</label>
+                    <input id="admin-password" class="form-control" type="password" autocomplete="current-password" required />
+                    <button class="btn btn-primary w-100 mt-3" type="submit">Anmelden</button>
+                    <p id="admin-login-error" class="text-danger small mt-2 mb-0 d-none">Passwort ist falsch.</p>
                 </form>
 
                 <section id="admin-content" class="d-none" aria-live="polite">
-                    <div class="alert alert-success mb-4" role="status">
-                        Zugriff freigegeben.
-                    </div>
-
-                    <nav class="admin-menu nav nav-pills mb-4">
-                        <a class="nav-link" href="/4meo/index.html"
-                            >Dashboard</a
-                        >
-                        <a class="nav-link" href="/4meo/upload.html"
-                            >Bilder Upload</a
-                        >
-                        <a
-                            class="nav-link active"
-                            aria-current="page"
-                            href="/4meo/editor.html"
-                            >Seiten Editor</a
-                        >
-                    </nav>
+                    <div class="alert alert-success mb-4" role="status">Zugriff freigegeben.</div>
 
                     <div class="card border-0 shadow-sm">
                         <div class="card-body">
-                            <h2 class="h5 mb-3">Seiten Editor</h2>
-                            <form
-                                id="admin-editor-form"
-                                class="admin-editor-form"
-                            >
+                            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
+                                <div>
+                                    <h2 class="h5 mb-1">Seiten Editor</h2>
+                                    <p class="text-body-secondary mb-0">Vorhandener Editor fuer Raspi, esp32, Code und die neue Howto-Seite.</p>
+                                </div>
+                                <a class="btn btn-primary" href="/4meo/editor.html?page=howto">Howto direkt oeffnen</a>
+                            </div>
+                            <form id="admin-editor-form" class="admin-editor-form">
                                 <div class="mb-3">
-                                    <label class="form-label" for="editor-page"
-                                        >Seite</label
-                                    >
-                                    <select
-                                        id="editor-page"
-                                        class="form-select"
-                                        name="page"
-                                        required
-                                    >
+                                    <label class="form-label" for="editor-page">Seite</label>
+                                    <select id="editor-page" class="form-select" name="page" required>
                                         <option value="raspi">Raspi</option>
                                         <option value="esp32">esp32</option>
                                         <option value="code">Code</option>
+                                        <option value="howto">Howto</option>
                                     </select>
                                 </div>
                                 <div class="row g-3">
                                     <div class="col-lg-4">
-                                        <label
-                                            class="form-label"
-                                            for="admin-project-list"
-                                            >Projekte</label
-                                        >
-                                        <div
-                                            id="admin-project-list"
-                                            class="admin-project-list list-group"
-                                        ></div>
-                                        <button
-                                            id="project-new"
-                                            class="btn btn-outline-primary w-100 mt-3"
-                                            type="button"
-                                        >
-                                            Neues Projekt
-                                        </button>
+                                        <label class="form-label" for="admin-project-list">Projekte</label>
+                                        <div id="admin-project-list" class="admin-project-list list-group"></div>
+                                        <button id="project-new" class="btn btn-outline-primary w-100 mt-3" type="button">Neues Projekt</button>
                                     </div>
                                     <div class="col-lg-8">
                                         <div class="mb-3">
-                                            <label
-                                                class="form-label"
-                                                for="project-title"
-                                                >Titel</label
-                                            >
-                                            <input
-                                                id="project-title"
-                                                class="form-control"
-                                                type="text"
-                                                placeholder="Projektname"
-                                            />
+                                            <label class="form-label" for="project-title">Titel</label>
+                                            <input id="project-title" class="form-control" type="text" placeholder="Projektname" />
                                         </div>
                                         <div class="mb-3">
-                                            <label
-                                                class="form-label"
-                                                for="project-summary"
-                                                >Kurztext</label
-                                            >
-                                            <textarea
-                                                id="project-summary"
-                                                class="form-control"
-                                                rows="3"
-                                                placeholder="Kurze Beschreibung"
-                                            ></textarea>
+                                            <label class="form-label" for="project-summary">Kurztext</label>
+                                            <textarea id="project-summary" class="form-control" rows="3" placeholder="Kurze Beschreibung"></textarea>
                                         </div>
                                         <label class="form-label">Inhalt</label>
-                                        <div
-                                            id="admin-editor"
-                                            class="admin-editor"
-                                        ></div>
+                                        <div id="admin-editor" class="admin-editor"></div>
                                     </div>
                                 </div>
-                                <div
-                                    class="d-flex gap-2 mt-4 admin-editor-actions"
-                                >
-                                    <button
-                                        id="editor-load"
-                                        class="btn btn-outline-secondary"
-                                        type="button"
-                                    >
-                                        Laden
-                                    </button>
-                                    <button
-                                        class="btn btn-primary ms-auto"
-                                        type="submit"
-                                    >
-                                        Speichern
-                                    </button>
+                                <div class="d-flex gap-2 mt-4 admin-editor-actions">
+                                    <button id="editor-load" class="btn btn-outline-secondary" type="button">Laden</button>
+                                    <button class="btn btn-primary ms-auto" type="submit">Speichern</button>
                                 </div>
                             </form>
-                            <p
-                                id="admin-editor-status"
-                                class="small text-body-secondary mt-3 mb-0"
-                            >
-                                Waehle eine Seite und lade den Inhalt.
-                            </p>
+                            <p id="admin-editor-status" class="small text-body-secondary mt-3 mb-0">Waehle eine Seite und lade den Inhalt.</p>
                         </div>
                     </div>
                 </section>
             </section>
         </main>
-
         <script type="module" src="/src/admin-editor.js"></script>
     </body>
 </html>

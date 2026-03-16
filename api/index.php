@@ -22,6 +22,7 @@ $typeToFolder = [
     "raspi" => $baseDir . "/img/lab/raspi",
     "esp32" => $baseDir . "/img/lab/esp32",
     "code" => $baseDir . "/img/lab/code",
+    "howto" => $baseDir . "/img/tools/howto",
 ];
 $typeAliases = [
     "fractals" => "fractals",
@@ -36,11 +37,13 @@ $typeAliases = [
     "raspi" => "raspi",
     "esp32" => "esp32",
     "code" => "code",
+    "howto" => "howto",
 ];
 $editablePages = [
     "raspi" => $baseDir . "/raspi.html",
     "esp32" => $baseDir . "/esp32.html",
     "code" => $baseDir . "/code.html",
+    "howto" => $baseDir . "/howto.html",
 ];
 const THUMB_MAX_EDGE = 640;
 const P5_MAX_TOTAL_UPLOAD_BYTES = 50 * 1024 * 1024; // 50MB

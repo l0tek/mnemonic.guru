@@ -3,38 +3,69 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>mnemonic.guru - Admin Dashboard</title>
+        <title>mnemonic.guru - Admin</title>
     </head>
     <body class="admin-page">
-        <main class="container-fluid py-5 px-3 px-lg-4">
-            <section class="admin-shell mx-auto">
-                <div
-                    class="d-flex justify-content-between align-items-center mb-4"
+
+        <nav class="admin-navbar admin-navbar--top navbar navbar-expand-lg" aria-label="Admin Navigation">
+            <div class="container admin-navbar-inner">
+                <a class="navbar-brand admin-navbar-brand" href="/4meo/index.html">
+                    <span class="admin-navbar-kicker">mnemonic.guru</span>
+                    <span class="admin-navbar-title">Admin</span>
+                </a>
+                <button
+                    class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#admin-navbar-nav"
+                    aria-controls="admin-navbar-nav"
+                    aria-expanded="false"
+                    aria-label="Admin Navigation umschalten"
                 >
-                    <div>
-                        <p
-                            class="text-uppercase text-body-secondary fw-semibold mb-1"
-                        >
-                            Restricted
-                        </p>
-                        <h1 class="h3 mb-0">Admin Bereich</h1>
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="admin-navbar-nav">
+                    <ul class="navbar-nav gap-lg-2 me-lg-auto mb-3 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="/4meo/index.html">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/4meo/upload.html">Uploads</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/4meo/editor.html">Editor</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/4meo/editor.html?page=howto">Howto bearbeiten</a>
+                        </li>
+                    </ul>
+                    <div class="admin-navbar-meta">
+                        <strong>Dashboard</strong>
+                        <span>Uebersicht und Schnellzugriffe</span>
                     </div>
                     <button
                         id="theme-toggle"
-                        class="btn btn-outline-secondary theme-toggle"
+                        class="btn btn-outline-secondary theme-toggle admin-navbar-theme"
                         type="button"
                         aria-label="Zu Darkmode wechseln"
                     >
-                        <span class="theme-icon" aria-hidden="true"
-                            >&#127769;</span
-                        >
+                        <span class="theme-icon" aria-hidden="true">&#127769;</span>
                     </button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="container-fluid py-5 px-3 px-lg-4">
+            <section class="admin-shell mx-auto">
+                <div class="mb-4">
+                    <p class="text-uppercase text-body-secondary fw-semibold mb-1">
+                        Restricted
+                    </p>
+                    <h1 class="h3 mb-0">Admin Bereich</h1>
                 </div>
 
                 <form id="admin-login-form" class="admin-login-form">
-                    <label class="form-label" for="admin-password"
-                        >Passwort</label
-                    >
+                    <label class="form-label" for="admin-password">Passwort</label>
                     <input
                         id="admin-password"
                         class="form-control"
@@ -45,10 +76,7 @@
                     <button class="btn btn-primary w-100 mt-3" type="submit">
                         Anmelden
                     </button>
-                    <p
-                        id="admin-login-error"
-                        class="text-danger small mt-2 mb-0 d-none"
-                    >
+                    <p id="admin-login-error" class="text-danger small mt-2 mb-0 d-none">
                         Passwort ist falsch.
                     </p>
                 </form>
@@ -58,30 +86,35 @@
                         Zugriff freigegeben.
                     </div>
 
-                    <nav class="admin-menu nav nav-pills mb-4">
-                        <a
-                            class="nav-link active"
-                            aria-current="page"
-                            href="/4meo/index.html"
-                            >Dashboard</a
-                        >
-                        <a class="nav-link" href="/4meo/upload.html"
-                            >Bilder Upload</a
-                        >
-                        <a class="nav-link" href="/4meo/editor.html"
-                            >Seiten Editor</a
-                        >
-                    </nav>
-
                     <div class="card border-0 shadow-sm">
                         <div class="card-body">
-                            <h2 class="h5 mb-0">Dashboard</h2>
+                            <h2 class="h5 mb-3">Dashboard</h2>
+                            <p class="text-body-secondary mb-4">
+                                Schneller Zugriff auf Uploads und editierbare Seiten.
+                            </p>
+                            <div class="admin-dashboard-grid">
+                                <article class="admin-shortcut-card">
+                                    <p class="text-uppercase small text-body-secondary fw-semibold mb-2">Bilder</p>
+                                    <h3 class="h6 fw-bold mb-2">Upload Bereich</h3>
+                                    <p class="text-body-secondary mb-3">
+                                        Bilder und p5.js Dateien hochladen.
+                                    </p>
+                                    <a class="btn btn-outline-primary" href="/4meo/upload.html">Upload oeffnen</a>
+                                </article>
+                                <article class="admin-shortcut-card">
+                                    <p class="text-uppercase small text-body-secondary fw-semibold mb-2">Content</p>
+                                    <h3 class="h6 fw-bold mb-2">Howto bearbeiten</h3>
+                                    <p class="text-body-secondary mb-3">
+                                        Nutzt den vorhandenen Seiten-Editor direkt fuer die neue Howto-Seite.
+                                    </p>
+                                    <a class="btn btn-primary" href="/4meo/editor.html?page=howto">Howto im Editor</a>
+                                </article>
+                            </div>
                         </div>
                     </div>
                 </section>
             </section>
         </main>
-
         <script type="module" src="/src/admin.js"></script>
     </body>
 </html>

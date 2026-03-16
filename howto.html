@@ -1,9 +1,9 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="de" data-bs-theme="light">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>mnemonic.guru - News</title>
+        <title>mnemonic.guru - Howto</title>
     </head>
     <body class="gallery-page">
         <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
@@ -99,7 +99,6 @@
                                 </li>
                             </ul>
                         </li>
-
                         <li class="nav-item dropdown d-flex align-items-center">
                             <a class="nav-link" href="/tools.html">Tools</a>
                             <button
@@ -123,20 +122,17 @@
                                     >
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="/howto.html"
+                                    <a
+                                        class="dropdown-item active"
+                                        aria-current="page"
+                                        href="/howto.html"
                                         >Howto</a
                                     >
                                 </li>
                             </ul>
                         </li>
-
                         <li class="nav-item">
-                            <a
-                                class="nav-link active"
-                                aria-current="page"
-                                href="/news.html"
-                                >News</a
-                            >
+                            <a class="nav-link" href="/news.html">News</a>
                         </li>
                         <li class="nav-item d-flex gap-2 ms-lg-auto">
                             <a
@@ -195,102 +191,27 @@
                 </div>
             </div>
         </nav>
-
         <main class="container py-5">
             <header class="mb-4">
                 <p class="text-uppercase text-body-secondary fw-semibold mb-1">
-                    RSS Feed
+                    Tools
                 </p>
-                <h1 class="display-6 fw-bold mb-2">News</h1>
+                <h1 class="h2 mb-2">Howto</h1>
                 <p class="text-body-secondary mb-0">
-                    Aktuelle Meldungen aus dem Heise Security Feed.
+                    Editierbare Sammlung fuer Anleitungen, Notizen und
+                    Schritt-fuer-Schritt Inhalte.
                 </p>
             </header>
-
-            <section class="mb-4">
-                <div class="accordion" id="news-security-accordion">
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="security-heading">
-                            <button
-                                class="accordion-button"
-                                type="button"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#security-collapse"
-                                aria-expanded="true"
-                                aria-controls="security-collapse"
-                            >
-                                Security
-                            </button>
-                        </h2>
-                        <div
-                            id="security-collapse"
-                            class="accordion-collapse collapse show"
-                            aria-labelledby="security-heading"
-                            data-bs-parent="#news-security-accordion"
-                        >
-                            <div class="accordion-body">
-                                <div id="security-news-list">
-                                    Lade Security-News ...
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="heise-online-heading">
-                            <button
-                                class="accordion-button collapsed"
-                                type="button"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#heise-online-collapse"
-                                aria-expanded="false"
-                                aria-controls="heise-online-collapse"
-                            >
-                                heise online
-                            </button>
-                        </h2>
-                        <div
-                            id="heise-online-collapse"
-                            class="accordion-collapse collapse"
-                            aria-labelledby="heise-online-heading"
-                            data-bs-parent="#news-security-accordion"
-                        >
-                            <div class="accordion-body">
-                                <div id="heise-online-news-list">
-                                    Lade heise-online-News ...
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="telepolis-heading">
-                            <button
-                                class="accordion-button collapsed"
-                                type="button"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#telepolis-collapse"
-                                aria-expanded="false"
-                                aria-controls="telepolis-collapse"
-                            >
-                                Telepolis
-                            </button>
-                        </h2>
-                        <div
-                            id="telepolis-collapse"
-                            class="accordion-collapse collapse"
-                            aria-labelledby="telepolis-heading"
-                            data-bs-parent="#news-security-accordion"
-                        >
-                            <div class="accordion-body">
-                                <div id="telepolis-news-list">
-                                    Lade Telepolis-News ...
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <section
+                class="mt-4"
+                id="page-editable-content"
+                data-page-key="howto"
+            >
+                <!-- EDITABLE:START -->
+                <p></p>
+                <!-- EDITABLE:END -->
             </section>
         </main>
-
-        <script type="module" src="/src/news.js"></script>
+        <script type="module" src="/src/main.js"></script>
     </body>
 </html>

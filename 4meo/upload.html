@@ -3,233 +3,131 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>mnemonic.guru - Admin Upload</title>
+        <title>mnemonic.guru - Admin</title>
     </head>
     <body class="admin-page">
-        <main class="container-fluid py-5 px-3 px-lg-4">
-            <section class="admin-shell admin-shell--wide mx-auto">
-                <div
-                    class="d-flex justify-content-between align-items-center mb-4"
+
+        <nav class="admin-navbar admin-navbar--top navbar navbar-expand-lg" aria-label="Admin Navigation">
+            <div class="container admin-navbar-inner">
+                <a class="navbar-brand admin-navbar-brand" href="/4meo/index.html">
+                    <span class="admin-navbar-kicker">mnemonic.guru</span>
+                    <span class="admin-navbar-title">Admin</span>
+                </a>
+                <button
+                    class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#admin-navbar-nav"
+                    aria-controls="admin-navbar-nav"
+                    aria-expanded="false"
+                    aria-label="Admin Navigation umschalten"
                 >
-                    <div>
-                        <p
-                            class="text-uppercase text-body-secondary fw-semibold mb-1"
-                        >
-                            Restricted
-                        </p>
-                        <h1 class="h3 mb-0">Admin Bereich</h1>
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="admin-navbar-nav">
+                    <ul class="navbar-nav gap-lg-2 me-lg-auto mb-3 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/4meo/index.html">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="/4meo/upload.html">Uploads</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/4meo/editor.html">Editor</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/4meo/editor.html?page=howto">Howto bearbeiten</a>
+                        </li>
+                    </ul>
+                    <div class="admin-navbar-meta">
+                        <strong>Uploads</strong>
+                        <span>Bilder und p5.js Dateien</span>
                     </div>
                     <button
                         id="theme-toggle"
-                        class="btn btn-outline-secondary theme-toggle"
+                        class="btn btn-outline-secondary theme-toggle admin-navbar-theme"
                         type="button"
                         aria-label="Zu Darkmode wechseln"
                     >
-                        <span class="theme-icon" aria-hidden="true"
-                            >&#127769;</span
-                        >
+                        <span class="theme-icon" aria-hidden="true">&#127769;</span>
                     </button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="container-fluid py-5 px-3 px-lg-4">
+            <section class="admin-shell admin-shell--wide mx-auto">
+                <div class="mb-4">
+                    <p class="text-uppercase text-body-secondary fw-semibold mb-1">
+                        Restricted
+                    </p>
+                    <h1 class="h3 mb-0">Admin Bereich</h1>
                 </div>
 
                 <form id="admin-login-form" class="admin-login-form">
-                    <label class="form-label" for="admin-password"
-                        >Passwort</label
-                    >
-                    <input
-                        id="admin-password"
-                        class="form-control"
-                        type="password"
-                        autocomplete="current-password"
-                        required
-                    />
-                    <button class="btn btn-primary w-100 mt-3" type="submit">
-                        Anmelden
-                    </button>
-                    <p
-                        id="admin-login-error"
-                        class="text-danger small mt-2 mb-0 d-none"
-                    >
-                        Passwort ist falsch.
-                    </p>
+                    <label class="form-label" for="admin-password">Passwort</label>
+                    <input id="admin-password" class="form-control" type="password" autocomplete="current-password" required />
+                    <button class="btn btn-primary w-100 mt-3" type="submit">Anmelden</button>
+                    <p id="admin-login-error" class="text-danger small mt-2 mb-0 d-none">Passwort ist falsch.</p>
                 </form>
 
                 <section id="admin-content" class="d-none" aria-live="polite">
-                    <div class="alert alert-success mb-4" role="status">
-                        Zugriff freigegeben.
-                    </div>
-
-                    <nav class="admin-menu nav nav-pills mb-4">
-                        <a class="nav-link" href="/4meo/index.html"
-                            >Dashboard</a
-                        >
-                        <a
-                            class="nav-link active"
-                            aria-current="page"
-                            href="/4meo/upload.html"
-                            >Bilder Upload</a
-                        >
-                        <a class="nav-link" href="/4meo/editor.html"
-                            >Seiten Editor</a
-                        >
-                    </nav>
+                    <div class="alert alert-success mb-4" role="status">Zugriff freigegeben.</div>
 
                     <div class="card border-0 shadow-sm">
                         <div class="card-body">
                             <h2 class="h5 mb-3">Bilder Upload</h2>
-                            <form
-                                id="admin-upload-form"
-                                class="admin-upload-form"
-                            >
+                            <form id="admin-upload-form" class="admin-upload-form">
                                 <div class="mb-3">
-                                    <label
-                                        class="form-label"
-                                        for="upload-category"
-                                        >Kategorie</label
-                                    >
-                                    <select
-                                        id="upload-category"
-                                        class="form-select"
-                                        name="imgtyp"
-                                        required
-                                    >
-                                        <option value="fraktale">
-                                            Fraktale
-                                        </option>
-                                        <option value="digital">
-                                            Digital Art
-                                        </option>
+                                    <label class="form-label" for="upload-category">Kategorie</label>
+                                    <select id="upload-category" class="form-select" name="imgtyp" required>
+                                        <option value="fraktale">Fraktale</option>
+                                        <option value="digital">Digital Art</option>
                                         <option value="fotos">Fotos</option>
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label" for="upload-image"
-                                        >Bild</label
-                                    >
-                                    <input
-                                        id="upload-image"
-                                        class="form-control"
-                                        type="file"
-                                        name="image"
-                                        accept="image/jpeg,image/png,image/webp"
-                                        required
-                                    />
+                                    <label class="form-label" for="upload-image">Bild</label>
+                                    <input id="upload-image" class="form-control" type="file" name="image" accept="image/jpeg,image/png,image/webp" required />
                                 </div>
-                                <button
-                                    class="btn btn-primary w-100"
-                                    type="submit"
-                                >
-                                    Bild hochladen
-                                </button>
+                                <button class="btn btn-primary w-100" type="submit">Bild hochladen</button>
                             </form>
-                            <p
-                                id="admin-upload-status"
-                                class="small text-body-secondary mt-3 mb-0"
-                            >
-                                Waehle Kategorie und Bild fuer den Upload.
-                            </p>
+                            <p id="admin-upload-status" class="small text-body-secondary mt-3 mb-0">Waehle Kategorie und Bild fuer den Upload.</p>
                         </div>
                     </div>
 
                     <div class="card border-0 shadow-sm mt-4">
                         <div class="card-body">
                             <h2 class="h5 mb-3">p5.js Datei Upload</h2>
-                            <form
-                                id="admin-p5-upload-form"
-                                class="admin-upload-form"
-                            >
+                            <form id="admin-p5-upload-form" class="admin-upload-form">
                                 <div class="mb-3">
-                                    <label
-                                        class="form-label"
-                                        for="upload-p5-project-name"
-                                        >Projektname</label
-                                    >
-                                    <input
-                                        id="upload-p5-project-name"
-                                        class="form-control"
-                                        name="project_name"
-                                        type="text"
-                                        placeholder="z. B. particle-playground"
-                                        required
-                                    />
+                                    <label class="form-label" for="upload-p5-project-name">Projektname</label>
+                                    <input id="upload-p5-project-name" class="form-control" name="project_name" type="text" placeholder="z. B. particle-playground" required />
                                 </div>
                                 <div class="mb-3">
-                                    <label
-                                        class="form-label"
-                                        for="upload-p5-file"
-                                        >HTML Datei</label
-                                    >
-                                    <input
-                                        id="upload-p5-file"
-                                        class="form-control"
-                                        type="file"
-                                        name="p5_file"
-                                        accept=".html,.htm,text/html"
-                                        required
-                                    />
+                                    <label class="form-label" for="upload-p5-file">HTML Datei</label>
+                                    <input id="upload-p5-file" class="form-control" type="file" name="p5_file" accept=".html,.htm,text/html" required />
                                 </div>
                                 <div class="mb-3">
-                                    <label
-                                        class="form-label"
-                                        for="upload-p5-description"
-                                        >Beschreibung</label
-                                    >
-                                    <textarea
-                                        id="upload-p5-description"
-                                        class="form-control"
-                                        name="description"
-                                        rows="4"
-                                        placeholder="Freitext zum Projekt"
-                                    ></textarea>
+                                    <label class="form-label" for="upload-p5-description">Beschreibung</label>
+                                    <textarea id="upload-p5-description" class="form-control" name="description" rows="4" placeholder="Freitext zum Projekt"></textarea>
                                 </div>
                                 <div class="mb-3">
-                                    <label
-                                        class="form-label"
-                                        for="upload-p5-snippets"
-                                        >Codeabschnitte (mit --- trennen)</label
-                                    >
-                                    <textarea
-                                        id="upload-p5-snippets"
-                                        class="form-control"
-                                        name="snippets"
-                                        rows="8"
-                                        placeholder="const speed = 2;&#10;function draw() {&#10;  ...&#10;}&#10;---&#10;function keyPressed() {&#10;  ...&#10;}"
-                                    ></textarea>
+                                    <label class="form-label" for="upload-p5-snippets">Codeabschnitte (mit --- trennen)</label>
+                                    <textarea id="upload-p5-snippets" class="form-control" name="snippets" rows="8" placeholder="const speed = 2;&#10;function draw() {&#10;  ...&#10;}&#10;---&#10;function keyPressed() {&#10;  ...&#10;}"></textarea>
                                 </div>
                                 <div class="form-check mb-3">
-                                    <input
-                                        id="upload-p5-replace"
-                                        class="form-check-input"
-                                        type="checkbox"
-                                        name="replace"
-                                    />
-                                    <label
-                                        class="form-check-label"
-                                        for="upload-p5-replace"
-                                    >
-                                        Bestehendes Projekt gleichen Namens
-                                        ersetzen
-                                    </label>
+                                    <input id="upload-p5-replace" class="form-check-input" type="checkbox" name="replace" />
+                                    <label class="form-check-label" for="upload-p5-replace">Bestehendes Projekt gleichen Namens ersetzen</label>
                                 </div>
-                                <button
-                                    class="btn btn-primary w-100"
-                                    type="submit"
-                                >
-                                    Datei hochladen
-                                </button>
+                                <button class="btn btn-primary w-100" type="submit">Datei hochladen</button>
                             </form>
-                            <p
-                                id="admin-p5-upload-status"
-                                class="small text-body-secondary mt-3 mb-0"
-                            >
-                                Lade genau eine HTML-Datei mit optionalem Text
-                                und Codeabschnitten hoch.
-                            </p>
+                            <p id="admin-p5-upload-status" class="small text-body-secondary mt-3 mb-0">Lade genau eine HTML-Datei mit optionalem Text und Codeabschnitten hoch.</p>
                         </div>
                     </div>
                 </section>
             </section>
         </main>
-
         <script type="module" src="/src/admin-upload.js"></script>
     </body>
 </html>

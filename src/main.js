@@ -339,12 +339,13 @@ const latestWorksGrid = document.getElementById("latest-works-grid");
 const latestNewsGrid = document.getElementById("latest-news-grid");
 const latestProjectsGrid = document.getElementById("latest-projects-grid");
 const pageEditableContent = document.getElementById("page-editable-content");
-const API_URL = "https://www.mnemonic.guru/api/index.php";
+const API_URL = new URL("/api/index.php", window.location.origin).toString();
 const IMAGE_PATTERN = /\.(jpg|jpeg|png|gif|webp)$/i;
 const projectPages = [
   { key: "raspi", label: "Raspi", pageUrl: "/raspi.html" },
   { key: "esp32", label: "esp32", pageUrl: "/esp32.html" },
   { key: "code", label: "Code", pageUrl: "/code.html" },
+  { key: "howto", label: "Howto", pageUrl: "/howto.html" },
 ];
 const teaserCategories = [
   {
@@ -561,6 +562,9 @@ const inferPageKeyFromPath = () => {
   }
   if (path.endsWith("/code.html")) {
     return "code";
+  }
+  if (path.endsWith("/howto.html")) {
+    return "howto";
   }
   return "";
 };
