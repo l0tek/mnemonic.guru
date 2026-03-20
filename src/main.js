@@ -1,4 +1,4 @@
-import "./styles.scss";
+﻿import "./styles.scss";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./nav-dropdowns.js";
 import * as THREE from "three";
@@ -76,18 +76,67 @@ if (thinkerCanvas) {
   const material = new THREE.MeshStandardMaterial({
     color: 0x9bdcff,
     transparent: true,
-    opacity: 0.35,
-    roughness: 0.45,
-    metalness: 0.1,
+    opacity: 0.46,
+    roughness: 0.32,
+    metalness: 0.18,
   });
   const loader = new STLLoader();
   const baseRotation = new THREE.Euler(-Math.PI / 2, 0, Math.PI);
   let thinkerPivot;
   let thinkerMesh;
+  let thinkerRadius = 1;
 
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(window.innerWidth, window.innerHeight, false);
-  camera.position.set(0, 8, 150);
+
+  const getThinkerLayout = () => {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    if (width >= 1200 && height <= 980) {
+      return {
+        cameraY: 12,
+        cameraZ: 172,
+        pivotX: 30,
+        pivotY: 8,
+        pivotZ: -24,
+        scaleTarget: 47,
+      };
+    }
+
+    if (width >= 1200 && height <= 1180) {
+      return {
+        cameraY: 10,
+        cameraZ: 164,
+        pivotX: 26,
+        pivotY: 5,
+        pivotZ: -22,
+        scaleTarget: 47,
+      };
+    }
+
+    return {
+      cameraY: 8,
+      cameraZ: 150,
+      pivotX: 30,
+      pivotY: -2,
+      pivotZ: -20,
+      scaleTarget: 48,
+    };
+  };
+
+  const applyThinkerLayout = () => {
+    const layout = getThinkerLayout();
+    camera.position.set(0, layout.cameraY, layout.cameraZ);
+    if (thinkerPivot) {
+      thinkerPivot.position.set(layout.pivotX, layout.pivotY, layout.pivotZ);
+    }
+    if (thinkerMesh) {
+      thinkerMesh.scale.setScalar(layout.scaleTarget / thinkerRadius);
+    }
+  };
+
+  applyThinkerLayout();
 
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
@@ -97,7 +146,7 @@ if (thinkerCanvas) {
   const setWireframeColor = () => {
     const theme =
       document.documentElement.getAttribute("data-bs-theme") || "light";
-    const wireColor = theme === "dark" ? 0x9bdcff : 0x163a5c;
+    const wireColor = theme === "dark" ? 0xc8eeff : 0x0f2f4f;
     material.color.setHex(wireColor);
   };
 
@@ -105,6 +154,7 @@ if (thinkerCanvas) {
     const width = window.innerWidth;
     const height = window.innerHeight;
     camera.aspect = width / height;
+    applyThinkerLayout();
     camera.updateProjectionMatrix();
     renderer.setSize(width, height, false);
   };
@@ -114,15 +164,13 @@ if (thinkerCanvas) {
     (geometry) => {
       geometry.center();
       geometry.computeBoundingSphere();
-      const radius = geometry.boundingSphere?.radius || 1;
-      const scale = 46 / radius;
+      thinkerRadius = geometry.boundingSphere?.radius || 1;
       thinkerPivot = new THREE.Group();
-      thinkerPivot.position.set(24, -2, -20);
       thinkerMesh = new THREE.Mesh(geometry, material);
-      thinkerMesh.scale.setScalar(scale);
       thinkerMesh.rotation.copy(baseRotation);
       thinkerPivot.add(thinkerMesh);
       scene.add(thinkerPivot);
+      applyThinkerLayout();
     },
     undefined,
     (error) => {
@@ -141,7 +189,7 @@ if (thinkerCanvas) {
 
   const animateThinker = () => {
     if (thinkerPivot) {
-      thinkerPivot.rotation.y -= 0.0022;
+      thinkerPivot.rotation.y += 0.0022;
     }
     renderer.render(scene, camera);
     window.requestAnimationFrame(animateThinker);
@@ -339,7 +387,7 @@ const latestWorksGrid = document.getElementById("latest-works-grid");
 const latestNewsGrid = document.getElementById("latest-news-grid");
 const latestProjectsGrid = document.getElementById("latest-projects-grid");
 const pageEditableContent = document.getElementById("page-editable-content");
-const API_URL = new URL("/api/index.php", window.location.origin).toString();
+const API_URL = "https://www.mnemonic.guru/api/index.php";
 const IMAGE_PATTERN = /\.(jpg|jpeg|png|gif|webp)$/i;
 const projectPages = [
   { key: "raspi", label: "Raspi", pageUrl: "/raspi.html" },
