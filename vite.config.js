@@ -20,6 +20,7 @@ export default defineConfig({
         howto: resolve(__dirname, "howto.html"),
         gctools: resolve(__dirname, "gctools.html"),
         whois: resolve(__dirname, "whois.html"),
+        pwgen: resolve(__dirname, "pwgen.html"),
         news: resolve(__dirname, "news.html"),
         adminDashboard: resolve(__dirname, "4meo/index.html"),
         adminUpload: resolve(__dirname, "4meo/upload.html"),

@@ -1,11 +1,11 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="de" data-bs-theme="light">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>mnemonic.guru - Fraktale</title>
+        <title>mnemonic.guru - Passwort Generator</title>
     </head>
-    <body class="gallery-page subgallery-page" data-gallery-category="fraktale">
+    <body class="gallery-page">
         <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
             <div class="container">
                 <a class="navbar-brand site-navbar-brand" href="/index.html" aria-label="mnemonic.guru Startseite">
@@ -45,17 +45,12 @@
                             ></button>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
-                                    <a
-                                        class="dropdown-item active"
-                                        aria-current="page"
-                                        href="/fraktale.html"
+                                    <a class="dropdown-item" href="/fraktale.html"
                                         >Fraktale</a
                                     >
                                 </li>
                                 <li>
-                                    <a
-                                        class="dropdown-item"
-                                        href="/digitalart.html"
+                                    <a class="dropdown-item" href="/digitalart.html"
                                         >Digital Art</a
                                     >
                                 </li>
@@ -86,7 +81,6 @@
                                         >esp32</a
                                     >
                                 </li>
-
                                 <li class="dropdown-submenu dropend">
                                     <a class="dropdown-item" href="/code.html"
                                         >Code</a
@@ -99,9 +93,7 @@
                                     ></button>
                                     <ul class="dropdown-menu">
                                         <li>
-                                            <a
-                                                class="dropdown-item"
-                                                href="/p5js.html"
+                                            <a class="dropdown-item" href="/p5js.html"
                                                 >p5.js</a
                                             >
                                         </li>
@@ -110,7 +102,12 @@
                             </ul>
                         </li>
                         <li class="nav-item dropdown d-flex align-items-center">
-                            <a class="nav-link" href="/tools.html">Tools</a>
+                            <a
+                                class="nav-link active"
+                                aria-current="page"
+                                href="/tools.html"
+                                >Tools</a
+                            >
                             <button
                                 class="btn btn-link nav-link dropdown-toggle px-2"
                                 type="button"
@@ -120,9 +117,7 @@
                             ></button>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
-                                    <a
-                                        class="dropdown-item"
-                                        href="/gctools.html"
+                                    <a class="dropdown-item" href="/gctools.html"
                                         >Crypto</a
                                     >
                                 </li>
@@ -132,7 +127,10 @@
                                     >
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="/pwgen.html"
+                                    <a
+                                        class="dropdown-item active"
+                                        aria-current="page"
+                                        href="/pwgen.html"
                                         >PWGen</a
                                     >
                                 </li>
@@ -204,61 +202,188 @@
             </div>
         </nav>
 
-        <main class="container py-5">
-            <header class="mb-4">
+        <main class="container py-5 pwgen-page">
+            <header class="mb-4 pwgen-hero">
                 <p class="text-uppercase text-body-secondary fw-semibold mb-1">
-                    Sektion
+                    Tools / PWGen
                 </p>
-                <h1 id="subgallery-title" class="display-6 fw-bold mb-2">
-                    Fraktale
-                </h1>
-                <p id="subgallery-description" class="text-body-secondary mb-0">
-                    Sammlung aus dem Fractals-Bereich.
+                <h1 class="display-6 fw-bold mb-2">Passwort Generator</h1>
+                <p class="text-body-secondary mb-0">
+                    Sichere Passwoerter lokal im Browser generieren, als Liste
+                    kopieren oder exportieren.
                 </p>
             </header>
 
-            <div id="subgallery-status" class="text-body-secondary mb-3">
-                Lade Bilder...
-            </div>
-            <div
-                id="subgallery-grid"
-                class="gallery-grid"
-                aria-live="polite"
-            ></div>
+            <section class="pwgen-grid">
+                <form id="pwgen-form" class="card border-0 shadow-sm pwgen-panel">
+                    <div class="card-body">
+                        <h2 class="h5 fw-bold mb-3">
+                            Wie sollte Dein Passwort sein?
+                        </h2>
+
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between gap-3">
+                                <label class="form-label fw-semibold" for="pwgen-length">
+                                    Zeichen
+                                </label>
+                                <output id="pwgen-length-value" for="pwgen-length">16</output>
+                            </div>
+                            <input
+                                id="pwgen-length"
+                                class="form-range"
+                                type="range"
+                                min="4"
+                                max="60"
+                                value="16"
+                            />
+                        </div>
+
+                        <div class="pwgen-options mb-4">
+                            <div class="form-check">
+                                <input
+                                    id="pwgen-lowercase"
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    checked
+                                />
+                                <label class="form-check-label" for="pwgen-lowercase">
+                                    Kleinbuchstaben (abc...)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input
+                                    id="pwgen-uppercase"
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    checked
+                                />
+                                <label class="form-check-label" for="pwgen-uppercase">
+                                    Grossbuchstaben (ABC...)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input
+                                    id="pwgen-numbers"
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    checked
+                                />
+                                <label class="form-check-label" for="pwgen-numbers">
+                                    Zahlen (123...)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input
+                                    id="pwgen-special"
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    checked
+                                />
+                                <label class="form-check-label" for="pwgen-special">
+                                    Sonderzeichen
+                                </label>
+                            </div>
+                        </div>
+
+                        <fieldset class="mb-4" id="pwgen-special-mode">
+                            <legend class="form-label fw-semibold">Sonderzeichen-Modus</legend>
+                            <div class="pwgen-segmented" role="group">
+                                <input
+                                    id="pwgen-smartphone"
+                                    class="btn-check"
+                                    type="radio"
+                                    name="pwgen-symbol-mode"
+                                    value="smartphone"
+                                    checked
+                                />
+                                <label class="btn btn-outline-primary" for="pwgen-smartphone">
+                                    Smartphone
+                                </label>
+                                <input
+                                    id="pwgen-all-special"
+                                    class="btn-check"
+                                    type="radio"
+                                    name="pwgen-symbol-mode"
+                                    value="all"
+                                />
+                                <label class="btn btn-outline-primary" for="pwgen-all-special">
+                                    Alle
+                                </label>
+                            </div>
+                        </fieldset>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold" for="pwgen-count">
+                                Wie viele Passwoerter brauchst Du?
+                            </label>
+                            <input
+                                id="pwgen-count"
+                                class="form-control"
+                                type="number"
+                                min="1"
+                                max="500"
+                                value="10"
+                                inputmode="numeric"
+                            />
+                        </div>
+
+                        <div class="d-grid">
+                            <button class="btn btn-primary" type="submit">
+                                Passwoerter generieren
+                            </button>
+                        </div>
+
+                        <p
+                            id="pwgen-status"
+                            class="small text-body-secondary mt-3 mb-0"
+                            aria-live="polite"
+                        >
+                            Bereit.
+                        </p>
+                    </div>
+                </form>
+
+                <section class="card border-0 shadow-sm pwgen-panel">
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+                            <div>
+                                <h2 class="h5 fw-bold mb-1">
+                                    Passwoerter werden generiert
+                                </h2>
+                                <p id="pwgen-strength" class="small text-body-secondary mb-0">
+                                    0 Bit pro Passwort.
+                                </p>
+                            </div>
+                            <div class="pwgen-actions">
+                                <button
+                                    id="pwgen-copy"
+                                    class="btn btn-outline-secondary btn-sm"
+                                    type="button"
+                                >
+                                    Kopieren
+                                </button>
+                                <button
+                                    id="pwgen-download-txt"
+                                    class="btn btn-outline-secondary btn-sm"
+                                    type="button"
+                                >
+                                    TXT
+                                </button>
+                                <button
+                                    id="pwgen-download-csv"
+                                    class="btn btn-outline-secondary btn-sm"
+                                    type="button"
+                                >
+                                    CSV
+                                </button>
+                            </div>
+                        </div>
+                        <ol id="pwgen-output" class="pwgen-output" aria-live="polite"></ol>
+                    </div>
+                </section>
+            </section>
         </main>
 
-        <div
-            id="blueimp-gallery"
-            class="blueimp-gallery"
-            aria-label="image gallery"
-            aria-modal="true"
-            role="dialog"
-        >
-            <div class="slides" aria-live="polite"></div>
-            <h3 class="title"></h3>
-            <a
-                class="prev"
-                aria-controls="blueimp-gallery"
-                aria-label="previous slide"
-            ></a>
-            <a
-                class="next"
-                aria-controls="blueimp-gallery"
-                aria-label="next slide"
-            ></a>
-            <a
-                class="close"
-                aria-controls="blueimp-gallery"
-                aria-label="close"
-            ></a>
-            <a
-                class="play-pause"
-                aria-controls="blueimp-gallery"
-                aria-label="play slideshow"
-            ></a>
-            <ol class="indicator"></ol>
-        </div>
-
-        <script type="module" src="/src/subgallery.js"></script>
+        <script type="module" src="/src/pwgen.js"></script>
     </body>
 </html>
