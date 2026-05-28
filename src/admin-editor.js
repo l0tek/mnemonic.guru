@@ -25,6 +25,8 @@ const projectSummaryLabel = document.querySelector('label[for="project-summary"]
 let editorInstance = null;
 let projects = [];
 let activeProjectIndex = -1;
+let sourceModeActive = false;
+let sourceEditor = null;
 const requestedEditorPage = String(
   new URLSearchParams(window.location.search).get("page") || "",
 )
@@ -113,6 +115,168 @@ const initEditor = () => {
   }
   bindEditorImagePasteAndDrop();
   enhanceEditorToolbar();
+  initSourceEditor();
+};
+
+const initSourceEditor = () => {
+  if (!editorRoot || sourceEditor) {
+    return;
+  }
+  sourceEditor = document.createElement("textarea");
+  sourceEditor.className = "admin-editor-source form-control";
+  sourceEditor.setAttribute("aria-label", "HTML Source bearbeiten");
+  sourceEditor.spellcheck = false;
+  sourceEditor.hidden = true;
+  editorRoot.insertAdjacentElement("afterend", sourceEditor);
+};
+
+const formatHtmlSource = (html) => {
+  const raw = String(html || "").trim();
+  if (!raw) {
+    return "";
+  }
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div>${raw}</div>`, "text/html");
+  const root = doc.body.firstElementChild;
+  if (!root) {
+    return raw;
+  }
+
+  const voidTags = new Set(["BR", "HR", "IMG", "INPUT", "META", "LINK"]);
+  const inlineTags = new Set([
+    "A",
+    "B",
+    "BR",
+    "CODE",
+    "EM",
+    "I",
+    "S",
+    "SPAN",
+    "STRONG",
+    "U",
+  ]);
+
+  const escapeText = (value) => {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  };
+
+  const serializeAttributes = (node) => {
+    return Array.from(node.attributes || [])
+      .map((attribute) => {
+        return ` ${attribute.name}="${String(attribute.value)
+          .replace(/&/g, "&amp;")
+          .replace(/"/g, "&quot;")}"`;
+      })
+      .join("");
+  };
+
+  const serializeInline = (node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return escapeText(node.textContent);
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return "";
+    }
+    const attrs = serializeAttributes(node);
+    if (voidTags.has(node.tagName)) {
+      return `<${node.tagName.toLowerCase()}${attrs}>`;
+    }
+    const children = Array.from(node.childNodes).map(serializeInline).join("");
+    return `<${node.tagName.toLowerCase()}${attrs}>${children}</${node.tagName.toLowerCase()}>`;
+  };
+
+  const serializeNode = (node, depth = 0) => {
+    const indent = "  ".repeat(depth);
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent.trim();
+      return text ? `${indent}${escapeText(text)}` : "";
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return "";
+    }
+
+    const tag = node.tagName.toLowerCase();
+    const attrs = serializeAttributes(node);
+    if (voidTags.has(node.tagName)) {
+      return `${indent}<${tag}${attrs}>`;
+    }
+
+    if (node.tagName === "PRE") {
+      return `${indent}<${tag}${attrs}>${node.textContent}</${tag}>`;
+    }
+
+    const children = Array.from(node.childNodes);
+    const inlineOnly = children.every((child) => {
+      return (
+        child.nodeType === Node.TEXT_NODE ||
+        (child.nodeType === Node.ELEMENT_NODE && inlineTags.has(child.tagName))
+      );
+    });
+
+    if (inlineOnly) {
+      return `${indent}<${tag}${attrs}>${children.map(serializeInline).join("")}</${tag}>`;
+    }
+
+    const childHtml = children
+      .map((child) => serializeNode(child, depth + 1))
+      .filter(Boolean)
+      .join("\n");
+    return `${indent}<${tag}${attrs}>\n${childHtml}\n${indent}</${tag}>`;
+  };
+
+  return Array.from(root.childNodes)
+    .map((node) => serializeNode(node, 0))
+    .filter(Boolean)
+    .join("\n");
+};
+
+const syncSourceFromEditor = () => {
+  if (!sourceEditor || !editorInstance) {
+    return;
+  }
+  sourceEditor.value = formatHtmlSource(editorInstance.root.innerHTML);
+};
+
+const syncEditorFromSource = () => {
+  if (!sourceEditor || !editorInstance) {
+    return;
+  }
+  editorInstance.root.innerHTML = sourceEditor.value || "<p><br></p>";
+};
+
+const setSourceMode = (active) => {
+  if (!editorRoot || !sourceEditor || !editorInstance) {
+    return;
+  }
+
+  sourceModeActive = Boolean(active);
+  const toolbar = document.querySelector(".admin-editor-form .ql-toolbar");
+  const sourceButton = toolbar?.querySelector(".admin-editor-source-button");
+
+  if (sourceModeActive) {
+    syncSourceFromEditor();
+    editorRoot.classList.add("d-none");
+    sourceEditor.hidden = false;
+    sourceEditor.focus();
+    sourceButton?.classList.add("ql-active");
+    sourceButton?.setAttribute("aria-pressed", "true");
+    return;
+  }
+
+  syncEditorFromSource();
+  sourceEditor.hidden = true;
+  editorRoot.classList.remove("d-none");
+  editorInstance.focus();
+  sourceButton?.classList.remove("ql-active");
+  sourceButton?.setAttribute("aria-pressed", "false");
+};
+
+const toggleSourceMode = () => {
+  setSourceMode(!sourceModeActive);
 };
 
 const toggleEditorCodeBlock = () => {
@@ -292,6 +456,26 @@ const enhanceEditorToolbar = () => {
       <span>Code</span>
     `;
   }
+
+  if (!toolbar.querySelector(".admin-editor-source-button")) {
+    const sourceButton = document.createElement("button");
+    sourceButton.type = "button";
+    sourceButton.className = "admin-editor-source-button";
+    sourceButton.title = "HTML Source";
+    sourceButton.setAttribute("aria-label", "HTML Source");
+    sourceButton.setAttribute("aria-pressed", "false");
+    sourceButton.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="16 18 22 12 16 6"></polyline>
+        <polyline points="8 6 2 12 8 18"></polyline>
+      </svg>
+      <span>HTML</span>
+    `;
+    sourceButton.addEventListener("click", () => {
+      toggleSourceMode();
+    });
+    toolbar.appendChild(sourceButton);
+  }
 };
 
 const saveActiveProjectFromFields = () => {
@@ -308,7 +492,9 @@ const saveActiveProjectFromFields = () => {
   projects[activeProjectIndex].summary = String(
     projectSummaryInput?.value || "",
   ).trim();
-  projects[activeProjectIndex].body = editorInstance.root.innerHTML;
+  projects[activeProjectIndex].body = sourceModeActive && sourceEditor
+    ? sourceEditor.value
+    : editorInstance.root.innerHTML;
 };
 
 const loadActiveProjectIntoFields = () => {
@@ -325,6 +511,9 @@ const loadActiveProjectIntoFields = () => {
   }
   if (projectSummaryInput) {
     projectSummaryInput.value = project.summary || "";
+  }
+  if (sourceModeActive) {
+    setSourceMode(false);
   }
   editorInstance.root.innerHTML = project.body || "<p><br></p>";
 };
@@ -520,6 +709,9 @@ if (editorForm && editorPageSelect && editorLoadButton) {
       return;
     }
 
+    if (sourceModeActive) {
+      syncEditorFromSource();
+    }
     saveActiveProjectFromFields();
     if (!projects.length) {
       updateStatus(

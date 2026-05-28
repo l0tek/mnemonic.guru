@@ -788,6 +788,38 @@ body.is-loading > :not(#page-loader) {
     overflow-y: auto;
 }
 
+.admin-editor-source {
+    height: 18.5rem;
+    min-height: 18.5rem;
+    max-height: 18.5rem;
+    resize: none;
+    overflow: auto;
+    font-family:
+        Consolas, Monaco, "Lucida Console", "Liberation Mono", "Courier New",
+        monospace;
+    font-size: 0.86rem;
+    line-height: 1.55;
+    background: #0b1020;
+    color: #dbe9ff;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.admin-editor-source:focus {
+    background: #0b1020;
+    color: #dbe9ff;
+}
+
+[data-bs-theme="light"] .admin-editor-source {
+    background: #f8fafc;
+    color: #0f172a;
+    border-color: rgba(15, 23, 42, 0.14);
+}
+
+[data-bs-theme="light"] .admin-editor-source:focus {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
 .admin-editor-form .row {
     margin-bottom: 1rem;
 }
@@ -883,16 +915,28 @@ body.is-loading > :not(#page-loader) {
     color: inherit !important;
 }
 
-.admin-editor-code-button svg {
+.admin-editor-code-button svg,
+.admin-editor-source-button svg {
     width: 1rem;
     height: 1rem;
     stroke: currentcolor !important;
 }
 
-.admin-editor-code-button span {
+.admin-editor-code-button span,
+.admin-editor-source-button span {
     font-size: 0.78rem;
     font-weight: 700;
     line-height: 1;
+}
+
+.admin-editor-source-button {
+    width: auto !important;
+    min-width: 4.6rem;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0.35rem;
+    padding-inline: 0.45rem !important;
+    color: inherit !important;
 }
 
 .admin-project-list {
@@ -1045,24 +1089,49 @@ body.is-loading > :not(#page-loader) {
     max-width: 44rem;
 }
 
-.howto-index-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 1rem;
+.howto-index-list {
+    max-width: 44rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.howto-index-card {
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 0.5rem;
-    background: rgba(8, 13, 26, 0.58);
-    padding: 1.1rem;
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+[data-bs-theme="light"] .howto-index-list {
+    border-top-color: rgba(15, 23, 42, 0.12);
 }
 
-[data-bs-theme="light"] .howto-index-card {
-    border-color: rgba(15, 23, 42, 0.12);
-    background: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+.howto-index-entry {
+    padding: 1.05rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+[data-bs-theme="light"] .howto-index-entry {
+    border-bottom-color: rgba(15, 23, 42, 0.12);
+}
+
+.howto-index-entry-title {
+    margin: 0 0 0.35rem;
+    font-size: 1.08rem;
+    line-height: 1.35;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.howto-index-entry-title a {
+    color: var(--bs-body-color);
+    text-decoration: none;
+}
+
+.howto-index-entry-title a:hover,
+.howto-index-entry-title a:focus-visible {
+    color: var(--bs-primary);
+    text-decoration: underline;
+    text-decoration-thickness: 0.08em;
+    text-underline-offset: 0.18em;
+}
+
+.howto-index-entry-summary {
+    margin: 0;
+    color: var(--bs-secondary-color);
+    line-height: 1.55;
 }
 
 .howto-detail-layout {

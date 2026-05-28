@@ -736,6 +736,8 @@ const renderProjectArticleCards = (container, pageKey, content) => {
   const setDetail = (article, button, shouldScroll = true) => {
     detailTitle.textContent = article.title;
     detailBody.innerHTML = article.bodyHtml || "<p>Kein Inhalt vorhanden.</p>";
+    normalizeHowtoCodeBlocks(detailBody);
+    bindHowtoCodeCopyButtons(detailBody);
     detail.classList.remove("d-none");
 
     const buttons = grid.querySelectorAll(".raspi-article-open");
@@ -894,6 +896,10 @@ const normalizeHowtoCodeBlocks = (root) => {
     const lines = Array.from(container.querySelectorAll(".ql-code-block")).map(
       (line) => line.textContent || "",
     );
+    if (!lines.join("").trim()) {
+      container.remove();
+      return;
+    }
     const wrapper = createTerminalCodeBlock({
       rawCode: lines.join("\n"),
       lang: container.dataset.language || "bash",
@@ -902,22 +908,49 @@ const normalizeHowtoCodeBlocks = (root) => {
     container.replaceWith(wrapper);
   });
 
-  const orphanQuillLines = Array.from(root.querySelectorAll(".ql-code-block"));
-  orphanQuillLines.forEach((line) => {
-    if (
-      line.closest(".code-block") ||
-      line.closest(".ql-code-block-container")
-    ) {
-      return;
-    }
-    markPreviousCodeLabel(line);
-    const wrapper = createTerminalCodeBlock({
-      rawCode: line.textContent || "",
-      lang: line.dataset.language || "bash",
-      prompt: line.dataset.prompt || "$",
+  const findOrphanQuillLine = () => {
+    return Array.from(root.querySelectorAll(".ql-code-block")).find((line) => {
+      return (
+        !line.closest(".code-block") &&
+        !line.closest(".ql-code-block-container")
+      );
     });
-    line.replaceWith(wrapper);
-  });
+  };
+
+  let orphanQuillLine = findOrphanQuillLine();
+  while (orphanQuillLine) {
+    if (
+      orphanQuillLine.closest(".code-block") ||
+      orphanQuillLine.closest(".ql-code-block-container")
+    ) {
+      orphanQuillLine = findOrphanQuillLine();
+      continue;
+    }
+
+    const group = [orphanQuillLine];
+    let next = orphanQuillLine.nextElementSibling;
+    while (next?.classList?.contains("ql-code-block")) {
+      group.push(next);
+      next = next.nextElementSibling;
+    }
+
+    const rawCode = group.map((line) => line.textContent || "").join("\n");
+    if (!rawCode.trim()) {
+      group.forEach((line) => line.remove());
+      orphanQuillLine = findOrphanQuillLine();
+      continue;
+    }
+
+    markPreviousCodeLabel(orphanQuillLine);
+    const wrapper = createTerminalCodeBlock({
+      rawCode,
+      lang: orphanQuillLine.dataset.language || "bash",
+      prompt: orphanQuillLine.dataset.prompt || "$",
+    });
+    orphanQuillLine.replaceWith(wrapper);
+    group.slice(1).forEach((line) => line.remove());
+    orphanQuillLine = findOrphanQuillLine();
+  }
 
   const blocks = Array.from(root.querySelectorAll("pre"));
   blocks.forEach((pre) => {
@@ -947,6 +980,28 @@ const normalizeHowtoCodeBlocks = (root) => {
       "bash";
     const prompt = pre.dataset.prompt || "$";
     const rawCode = code?.textContent || "";
+    if (!rawCode.trim()) {
+      const next = pre.nextElementSibling;
+      const nextText = next?.textContent?.trim() || "";
+      if (
+        next &&
+        next.tagName.toLowerCase() === "p" &&
+        nextText.length > 0 &&
+        nextText.length <= 240 &&
+        !/[.!?]$/.test(nextText)
+      ) {
+        const wrapper = createTerminalCodeBlock({
+          rawCode: nextText,
+          lang,
+          prompt,
+        });
+        pre.replaceWith(wrapper);
+        next.remove();
+        return;
+      }
+      pre.remove();
+      return;
+    }
 
     const wrapper = createTerminalCodeBlock({ rawCode, lang, prompt });
     pre.replaceWith(wrapper);
@@ -1038,32 +1093,31 @@ const renderHowtoIndex = (container, pageKey, content) => {
     return false;
   }
 
-  const grid = document.createElement("div");
-  grid.className = "howto-index-grid";
+  const list = document.createElement("div");
+  list.className = "howto-index-list";
 
   articles.forEach((article) => {
-    const card = document.createElement("article");
-    card.className = "howto-index-card";
+    const entry = document.createElement("article");
+    entry.className = "howto-index-entry";
 
     const title = document.createElement("h2");
-    title.className = "h5 fw-bold mb-2";
-    title.textContent = article.title;
-
-    const summary = document.createElement("p");
-    summary.className = "text-body-secondary mb-3";
-    summary.textContent = article.summary || "Schritt-fuer-Schritt Anleitung";
+    title.className = "howto-index-entry-title";
 
     const link = document.createElement("a");
-    link.className = "btn btn-outline-primary";
     link.href = `/howto-detail.html?howto=${encodeURIComponent(getHowtoSlug(article))}`;
-    link.textContent = "Howto lesen";
+    link.textContent = article.title;
+    title.appendChild(link);
 
-    card.append(title, summary, link);
-    grid.appendChild(card);
+    const summary = document.createElement("p");
+    summary.className = "howto-index-entry-summary";
+    summary.textContent = article.summary || "Schritt-fuer-Schritt Anleitung";
+
+    entry.append(title, summary);
+    list.appendChild(entry);
   });
 
   container.innerHTML = "";
-  container.appendChild(grid);
+  container.appendChild(list);
   return true;
 };
 
