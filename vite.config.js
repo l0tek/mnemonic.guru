@@ -18,6 +18,7 @@ export default defineConfig({
         p5js: resolve(__dirname, "p5js.html"),
         tools: resolve(__dirname, "tools.html"),
         howto: resolve(__dirname, "howto.html"),
+        howtoDetail: resolve(__dirname, "howto-detail.html"),
         gctools: resolve(__dirname, "gctools.html"),
         whois: resolve(__dirname, "whois.html"),
         pwgen: resolve(__dirname, "pwgen.html"),

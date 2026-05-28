@@ -393,7 +393,6 @@ const projectPages = [
   { key: "raspi", label: "Raspi", pageUrl: "/raspi.html" },
   { key: "esp32", label: "esp32", pageUrl: "/esp32.html" },
   { key: "code", label: "Code", pageUrl: "/code.html" },
-  { key: "howto", label: "Howto", pageUrl: "/howto.html" },
 ];
 const teaserCategories = [
   {
@@ -656,13 +655,44 @@ const parseProjectCardsFromContent = (content, pageKey) => {
   });
 };
 
+const slugifyHowtoValue = (value, fallback = "howto") => {
+  const slug = String(value || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return slug || fallback;
+};
+
+const getHowtoSlug = (article) => {
+  return slugifyHowtoValue(article.title, article.id);
+};
+
 const toTimestamp = (value) => {
   const date = new Date(value || "");
   const unix = date.getTime();
   return Number.isNaN(unix) ? 0 : unix;
 };
 
+const truncateText = (value, maxLength) => {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  if (text.length <= maxLength) {
+    return text;
+  }
+  return `${text.slice(0, maxLength - 1).trim()}...`;
+};
+
 const getPageMetaByKey = (pageKey) => {
+  if (pageKey === "p5js") {
+    return {
+      key: "p5js",
+      label: "p5.js",
+      pageUrl: "/p5js.html",
+    };
+  }
+
   return (
     projectPages.find((entry) => entry.key === pageKey) || {
       key: pageKey,
@@ -776,6 +806,413 @@ const renderProjectArticleCards = (container, pageKey, content) => {
   return true;
 };
 
+const normalizeHowtoCodeBlocks = (root) => {
+  if (!root) {
+    return;
+  }
+
+  const createTerminalCodeBlock = ({ rawCode, lang = "bash", prompt = "$" }) => {
+    const normalizedCode = String(rawCode || "").replace(/\s+$/g, "");
+    const lines = normalizedCode ? normalizedCode.split("\n") : [""];
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "code-block relative my-4 rounded-lg overflow-hidden";
+    wrapper.dataset.lang = lang;
+    wrapper.dataset.prompt = prompt;
+    wrapper.dataset.promptInit = "1";
+
+    const header = document.createElement("div");
+    header.className = "code-header";
+    header.innerHTML = `
+      <div class="code-header-title">
+        <svg class="code-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="4 17 10 11 4 5"></polyline>
+          <line x1="12" y1="19" x2="20" y2="19"></line>
+        </svg>
+        <span>Terminal</span>
+      </div>
+      <button class="code-copy button" type="button" aria-label="Copy code to clipboard">
+        <svg class="code-copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+      </button>
+    `;
+
+    const highlight = document.createElement("div");
+    highlight.className = "highlight";
+
+    const nextPre = document.createElement("pre");
+    nextPre.tabIndex = 0;
+    nextPre.className = "chroma howto-code-block";
+
+    const nextCode = document.createElement("code");
+    nextCode.className = `language-${lang}`;
+    nextCode.dataset.lang = lang;
+
+    lines.forEach((line) => {
+      const lineElement = document.createElement("span");
+      lineElement.className = "line";
+      lineElement.dataset.promptChar = prompt;
+
+      const content = document.createElement("span");
+      content.className = "cl";
+      content.textContent = line;
+
+      lineElement.appendChild(content);
+      nextCode.appendChild(lineElement);
+    });
+
+    nextPre.appendChild(nextCode);
+    highlight.appendChild(nextPre);
+    wrapper.append(header, highlight);
+    return wrapper;
+  };
+
+  const markPreviousCodeLabel = (element) => {
+    const previous = element.previousElementSibling;
+    const previousText = previous?.textContent?.trim() || "";
+    if (
+      previous &&
+      previous.tagName.toLowerCase() === "p" &&
+      previousText.length > 0 &&
+      previousText.length <= 40 &&
+      !/[.!?]$/.test(previousText)
+    ) {
+      previous.classList.add("howto-code-label");
+    }
+  };
+
+  const quillContainers = Array.from(
+    root.querySelectorAll(".ql-code-block-container"),
+  );
+  quillContainers.forEach((container) => {
+    if (container.closest(".code-block")) {
+      return;
+    }
+    markPreviousCodeLabel(container);
+    const lines = Array.from(container.querySelectorAll(".ql-code-block")).map(
+      (line) => line.textContent || "",
+    );
+    const wrapper = createTerminalCodeBlock({
+      rawCode: lines.join("\n"),
+      lang: container.dataset.language || "bash",
+      prompt: container.dataset.prompt || "$",
+    });
+    container.replaceWith(wrapper);
+  });
+
+  const orphanQuillLines = Array.from(root.querySelectorAll(".ql-code-block"));
+  orphanQuillLines.forEach((line) => {
+    if (
+      line.closest(".code-block") ||
+      line.closest(".ql-code-block-container")
+    ) {
+      return;
+    }
+    markPreviousCodeLabel(line);
+    const wrapper = createTerminalCodeBlock({
+      rawCode: line.textContent || "",
+      lang: line.dataset.language || "bash",
+      prompt: line.dataset.prompt || "$",
+    });
+    line.replaceWith(wrapper);
+  });
+
+  const blocks = Array.from(root.querySelectorAll("pre"));
+  blocks.forEach((pre) => {
+    if (pre.closest(".code-block")) {
+      return;
+    }
+
+    pre.classList.add("howto-code-block");
+    let code = pre.querySelector("code");
+    if (!code) {
+      const code = document.createElement("code");
+      code.textContent = pre.textContent || "";
+      pre.textContent = "";
+      pre.appendChild(code);
+    }
+    code = pre.querySelector("code");
+    markPreviousCodeLabel(pre);
+
+    const languageClass =
+      Array.from(code?.classList || []).find((entry) =>
+        entry.startsWith("language-"),
+      ) || "";
+    const lang =
+      pre.dataset.lang ||
+      code?.dataset.lang ||
+      languageClass.replace("language-", "") ||
+      "bash";
+    const prompt = pre.dataset.prompt || "$";
+    const rawCode = code?.textContent || "";
+
+    const wrapper = createTerminalCodeBlock({ rawCode, lang, prompt });
+    pre.replaceWith(wrapper);
+  });
+};
+
+const bindHowtoCodeCopyButtons = (root) => {
+  if (!root) {
+    return;
+  }
+
+  const buttons = Array.from(root.querySelectorAll(".code-copy"));
+  buttons.forEach((button) => {
+    button.addEventListener("click", async () => {
+      const block = button.closest(".code-block");
+      const codeLines = Array.from(block?.querySelectorAll(".cl") || []).map(
+        (line) => line.textContent || "",
+      );
+      const codeText =
+        codeLines.length > 0
+          ? codeLines.join("\n")
+          : block?.querySelector("code")?.textContent || "";
+      if (!codeText) {
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(codeText);
+        button.classList.add("is-copied");
+        window.setTimeout(() => {
+          button.classList.remove("is-copied");
+        }, 1200);
+      } catch (error) {
+        console.error("Copy code failed:", error);
+      }
+    });
+  });
+};
+
+const buildHowtoOutline = (contentBody, aside) => {
+  if (!contentBody || !aside) {
+    return;
+  }
+
+  const headings = Array.from(contentBody.querySelectorAll("h2, h3"));
+  if (!headings.length) {
+    aside.classList.add("d-none");
+    return;
+  }
+
+  const list = document.createElement("ul");
+  list.className = "howto-toc-list";
+  const usedIds = new Set();
+
+  headings.forEach((heading, index) => {
+    const label = heading.textContent?.trim() || `Abschnitt ${index + 1}`;
+    let id = heading.id || slugifyHowtoValue(label, `section-${index + 1}`);
+    let suffix = 2;
+    while (usedIds.has(id)) {
+      id = `${id}-${suffix}`;
+      suffix += 1;
+    }
+    usedIds.add(id);
+    heading.id = id;
+
+    const item = document.createElement("li");
+    item.className = heading.tagName.toLowerCase() === "h3" ? "is-child" : "";
+    const link = document.createElement("a");
+    link.href = `#${id}`;
+    link.textContent = label;
+    item.appendChild(link);
+    list.appendChild(item);
+  });
+
+  aside.innerHTML = "";
+  const title = document.createElement("strong");
+  title.textContent = "On this page";
+  aside.append(title, list);
+};
+
+const renderHowtoIndex = (container, pageKey, content) => {
+  if (!container) {
+    return false;
+  }
+
+  const articles = parseProjectCardsFromContent(content, pageKey).sort(
+    (a, b) => b.originalIndex - a.originalIndex,
+  );
+  if (!articles.length) {
+    return false;
+  }
+
+  const grid = document.createElement("div");
+  grid.className = "howto-index-grid";
+
+  articles.forEach((article) => {
+    const card = document.createElement("article");
+    card.className = "howto-index-card";
+
+    const title = document.createElement("h2");
+    title.className = "h5 fw-bold mb-2";
+    title.textContent = article.title;
+
+    const summary = document.createElement("p");
+    summary.className = "text-body-secondary mb-3";
+    summary.textContent = article.summary || "Schritt-fuer-Schritt Anleitung";
+
+    const link = document.createElement("a");
+    link.className = "btn btn-outline-primary";
+    link.href = `/howto-detail.html?howto=${encodeURIComponent(getHowtoSlug(article))}`;
+    link.textContent = "Howto lesen";
+
+    card.append(title, summary, link);
+    grid.appendChild(card);
+  });
+
+  container.innerHTML = "";
+  container.appendChild(grid);
+  return true;
+};
+
+const renderHowtoDetail = (container, pageKey, content) => {
+  if (!container) {
+    return false;
+  }
+
+  const articles = parseProjectCardsFromContent(content, pageKey).sort(
+    (a, b) => b.originalIndex - a.originalIndex,
+  );
+  if (!articles.length) {
+    return false;
+  }
+
+  const requestedSlug =
+    String(new URLSearchParams(window.location.search).get("howto") || "")
+      .trim()
+      .toLowerCase() || getHowtoSlug(articles[0]);
+  const article =
+    articles.find((entry) => getHowtoSlug(entry) === requestedSlug) ||
+    articles[0];
+
+  const layout = document.createElement("div");
+  layout.className = "howto-detail-layout";
+
+  const articleElement = document.createElement("article");
+  articleElement.className = "howto-article";
+
+  const crumb = document.createElement("nav");
+  crumb.className = "howto-breadcrumb";
+  crumb.setAttribute("aria-label", "Breadcrumb");
+  crumb.innerHTML = `<a href="/howto.html">Howto</a><span>/</span><span></span>`;
+  crumb.querySelector("span:last-child").textContent = article.title;
+
+  const title = document.createElement("h1");
+  title.className = "howto-article-title";
+  title.textContent = article.title;
+
+  const meta = document.createElement("p");
+  meta.className = "howto-article-meta";
+  meta.textContent = "mnemonic.guru";
+
+  const summary = document.createElement("p");
+  summary.className = "howto-article-lead";
+  summary.textContent = article.summary || "";
+
+  const body = document.createElement("div");
+  body.className = "howto-article-body";
+  body.innerHTML = article.bodyHtml || "<p>Kein Inhalt vorhanden.</p>";
+  normalizeHowtoCodeBlocks(body);
+  bindHowtoCodeCopyButtons(body);
+
+  articleElement.append(crumb, title, meta);
+  if (article.summary) {
+    articleElement.appendChild(summary);
+  }
+  articleElement.appendChild(body);
+
+  const aside = document.createElement("aside");
+  aside.className = "howto-toc";
+  buildHowtoOutline(body, aside);
+
+  layout.append(articleElement, aside);
+  container.innerHTML = "";
+  container.appendChild(layout);
+  return true;
+};
+
+const renderHowtoPage = (container, pageKey, content) => {
+  const view = String(container?.dataset.howtoView || "index").toLowerCase();
+  if (view === "detail") {
+    return renderHowtoDetail(container, pageKey, content);
+  }
+  return renderHowtoIndex(container, pageKey, content);
+};
+
+const renderHowtoAccordion = (container, pageKey, content) => {
+  if (!container) {
+    return false;
+  }
+
+  const articles = parseProjectCardsFromContent(content, pageKey).sort(
+    (a, b) => b.originalIndex - a.originalIndex,
+  );
+  if (!articles.length) {
+    return false;
+  }
+
+  const accordion = document.createElement("div");
+  accordion.className = "accordion howto-accordion";
+  accordion.id = "howto-accordion";
+
+  articles.forEach((article, index) => {
+    const item = document.createElement("article");
+    item.className = "accordion-item howto-accordion-item";
+
+    const headerId = `howto-heading-${index + 1}`;
+    const panelId = `howto-panel-${index + 1}`;
+    const header = document.createElement("h2");
+    header.className = "accordion-header";
+    header.id = headerId;
+
+    const button = document.createElement("button");
+    button.className = `accordion-button${index === 0 ? "" : " collapsed"}`;
+    button.type = "button";
+    button.setAttribute("data-bs-toggle", "collapse");
+    button.setAttribute("data-bs-target", `#${panelId}`);
+    button.setAttribute("aria-expanded", index === 0 ? "true" : "false");
+    button.setAttribute("aria-controls", panelId);
+
+    const title = document.createElement("span");
+    title.className = "howto-accordion-title";
+    title.textContent = article.title;
+
+    button.appendChild(title);
+    header.appendChild(button);
+
+    const panel = document.createElement("div");
+    panel.id = panelId;
+    panel.className = `accordion-collapse collapse${index === 0 ? " show" : ""}`;
+    panel.setAttribute("aria-labelledby", headerId);
+    panel.setAttribute("data-bs-parent", "#howto-accordion");
+
+    const body = document.createElement("div");
+    body.className = "accordion-body howto-accordion-body";
+
+    if (article.summary) {
+      const summary = document.createElement("p");
+      summary.className = "text-body-secondary mb-3";
+      summary.textContent = article.summary;
+      body.appendChild(summary);
+    }
+
+    const contentBody = document.createElement("div");
+    contentBody.className = "howto-accordion-content";
+    contentBody.innerHTML = article.bodyHtml || "<p>Kein Inhalt vorhanden.</p>";
+
+    body.appendChild(contentBody);
+    panel.appendChild(body);
+    item.append(header, panel);
+    accordion.appendChild(item);
+  });
+
+  container.innerHTML = "";
+  container.appendChild(accordion);
+  return true;
+};
+
 const fetchProjectPagePayload = async (pageKey) => {
   const response = await fetch(
     `${API_URL}?page_content=1&page=${encodeURIComponent(pageKey)}`,
@@ -807,6 +1244,9 @@ const loadEditablePageContent = async () => {
   try {
     const payload = await fetchProjectPagePayload(pageKey);
     const content = String(payload?.content || "");
+    if (pageKey === "howto" && renderHowtoPage(pageEditableContent, pageKey, content)) {
+      return;
+    }
     if (renderProjectArticleCards(pageEditableContent, pageKey, content)) {
       return;
     }
@@ -826,7 +1266,10 @@ const renderLatestProjectOverviewCard = (project) => {
   card.className = "latest-work-card";
 
   const link = document.createElement("a");
-  link.href = `${pageMeta.pageUrl}?article=${encodeURIComponent(project.id)}`;
+  link.href =
+    project.pageKey === "p5js"
+      ? pageMeta.pageUrl
+      : `${pageMeta.pageUrl}?article=${encodeURIComponent(project.id)}`;
   link.className = "latest-work-link";
 
   if (project.imageUrl) {
@@ -840,11 +1283,92 @@ const renderLatestProjectOverviewCard = (project) => {
 
   const meta = document.createElement("div");
   meta.className = "latest-work-meta";
-  meta.innerHTML = `<span>${pageMeta.label}</span><strong>${project.title}</strong>`;
+
+  const label = document.createElement("span");
+  label.textContent = pageMeta.label;
+
+  const title = document.createElement("strong");
+  title.textContent = project.title;
+
+  meta.append(label, title);
+
+  if (project.summary) {
+    const summary = document.createElement("small");
+    summary.className = "text-body-secondary latest-project-summary";
+    summary.textContent = truncateText(project.summary, 160);
+    meta.appendChild(summary);
+  }
+
+  if (project.codeSnippet) {
+    const pre = document.createElement("pre");
+    pre.className = "latest-project-code";
+
+    const code = document.createElement("code");
+    code.textContent = truncateText(project.codeSnippet, 420);
+
+    pre.appendChild(code);
+    meta.appendChild(pre);
+  }
 
   link.appendChild(meta);
   card.appendChild(link);
   latestProjectsGrid.appendChild(card);
+};
+
+const fetchLatestP5ProjectOverview = async () => {
+  const response = await fetch(`${API_URL}?p5js_projects=1`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  const payload = await response.json();
+  if (String(payload?.status || "").toUpperCase() !== "OK") {
+    throw new Error(payload?.msg || "Unerwartete API-Antwort");
+  }
+
+  const projects = Array.isArray(payload.projects) ? payload.projects : [];
+  const latestProject = projects[0];
+  if (!latestProject) {
+    return null;
+  }
+
+  let codeSnippet = "";
+  let description = String(latestProject.description || "");
+  try {
+    const codeResponse = await fetch(
+      `${API_URL}?p5js_project_code=1&project=${encodeURIComponent(latestProject.slug)}`,
+      { cache: "no-store" },
+    );
+    if (!codeResponse.ok) {
+      throw new Error(`HTTP ${codeResponse.status}`);
+    }
+    const codePayload = await codeResponse.json();
+    if (String(codePayload?.status || "").toUpperCase() !== "OK") {
+      throw new Error(codePayload?.msg || "Unerwartete API-Antwort");
+    }
+    description =
+      String(codePayload?.description || "").trim() || description;
+    const snippets = Array.isArray(codePayload?.snippets)
+      ? codePayload.snippets
+      : [];
+    const codeFile = snippets[0] || codePayload?.file || null;
+    codeSnippet = String(codeFile?.content || "");
+  } catch (error) {
+    console.error("Latest p5.js code failed:", error);
+  }
+
+  return {
+    id: `p5js-${latestProject.slug}`,
+    pageKey: "p5js",
+    title: `${latestProject.name} - Beschreibung und Quelltext`,
+    summary: description,
+    codeSnippet,
+    imageUrl: "",
+    originalIndex: 1,
+    pageUpdatedAt: toTimestamp(latestProject.updated_at || ""),
+    withinPageRank: 0,
+  };
 };
 
 const loadLatestProjectsOverview = async () => {
@@ -873,6 +1397,15 @@ const loadLatestProjectsOverview = async () => {
     } catch (error) {
       console.error(`Latest projects failed (${page.key}):`, error);
     }
+  }
+
+  try {
+    const p5Project = await fetchLatestP5ProjectOverview();
+    if (p5Project) {
+      allProjects.push(p5Project);
+    }
+  } catch (error) {
+    console.error("Latest p5.js project failed:", error);
   }
 
   allProjects

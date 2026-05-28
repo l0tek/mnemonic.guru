@@ -18,6 +18,9 @@ const projectList = document.getElementById("admin-project-list");
 const projectNewButton = document.getElementById("project-new");
 const projectTitleInput = document.getElementById("project-title");
 const projectSummaryInput = document.getElementById("project-summary");
+const projectListLabel = document.querySelector('label[for="admin-project-list"]');
+const projectTitleLabel = document.querySelector('label[for="project-title"]');
+const projectSummaryLabel = document.querySelector('label[for="project-summary"]');
 
 let editorInstance = null;
 let projects = [];
@@ -35,10 +38,46 @@ const apiOrigin = (() => {
   }
 })();
 
+const getCurrentEntryLabel = () => {
+  return String(editorPageSelect?.value || "").toLowerCase() === "howto"
+    ? "Howto"
+    : "Projekt";
+};
+
+const getCurrentEntryPlural = () => {
+  return String(editorPageSelect?.value || "").toLowerCase() === "howto"
+    ? "Howtos"
+    : "Projekte";
+};
+
+const updateEditorCopy = () => {
+  const isHowto = String(editorPageSelect?.value || "").toLowerCase() === "howto";
+  if (projectListLabel) {
+    projectListLabel.textContent = isHowto ? "Howtos" : "Projekte";
+  }
+  if (projectNewButton) {
+    projectNewButton.textContent = isHowto ? "Neues Howto" : "Neues Projekt";
+  }
+  if (projectTitleLabel) {
+    projectTitleLabel.textContent = isHowto ? "Howto Titel" : "Titel";
+  }
+  if (projectSummaryLabel) {
+    projectSummaryLabel.textContent = isHowto ? "Kurzbeschreibung" : "Kurztext";
+  }
+  if (projectTitleInput) {
+    projectTitleInput.placeholder = isHowto ? "Titel der Anleitung" : "Projektname";
+  }
+  if (projectSummaryInput) {
+    projectSummaryInput.placeholder = isHowto
+      ? "Kurze Einordnung fuer die Uebersicht"
+      : "Kurze Beschreibung";
+  }
+};
+
 const createEmptyProject = (index) => {
   return {
     id: `project-${Date.now()}-${index}`,
-    title: `Projekt ${index + 1}`,
+    title: `${getCurrentEntryLabel()} ${index + 1}`,
     summary: "",
     body: "<p><br></p>",
   };
@@ -50,7 +89,7 @@ const initEditor = () => {
   }
   editorInstance = new Quill(editorRoot, {
     theme: "snow",
-    placeholder: "Projektinhalt eingeben ...",
+    placeholder: "Inhalt eingeben ...",
     modules: {
       toolbar: {
         container: [
@@ -68,8 +107,36 @@ const initEditor = () => {
     toolbar.addHandler("image", () => {
       pickAndInsertImage();
     });
+    toolbar.addHandler("code-block", () => {
+      toggleEditorCodeBlock();
+    });
   }
   bindEditorImagePasteAndDrop();
+  enhanceEditorToolbar();
+};
+
+const toggleEditorCodeBlock = () => {
+  if (!editorInstance) {
+    return;
+  }
+
+  const range = editorInstance.getSelection(true);
+  if (!range) {
+    editorInstance.focus();
+    return;
+  }
+
+  const formats = editorInstance.getFormat(range);
+  const isCodeBlock = Boolean(formats["code-block"]);
+  const length = Math.max(range.length, 1);
+  editorInstance.formatLine(
+    range.index,
+    length,
+    "code-block",
+    isCodeBlock ? false : true,
+    "user",
+  );
+  editorInstance.focus();
 };
 
 const resolveUploadedImageUrl = (path) => {
@@ -183,6 +250,50 @@ const bindEditorImagePasteAndDrop = () => {
   });
 };
 
+const enhanceEditorToolbar = () => {
+  const toolbar = document.querySelector(".admin-editor-form .ql-toolbar");
+  if (!toolbar) {
+    return;
+  }
+
+  const setButtonTitle = (selector, title) => {
+    const button = toolbar.querySelector(selector);
+    if (!button) {
+      return;
+    }
+    button.type = "button";
+    button.title = title;
+    button.setAttribute("aria-label", title);
+  };
+
+  setButtonTitle(".ql-bold", "Fett");
+  setButtonTitle(".ql-italic", "Kursiv");
+  setButtonTitle(".ql-underline", "Unterstreichen");
+  setButtonTitle(".ql-strike", "Durchstreichen");
+  setButtonTitle('.ql-list[value="ordered"]', "Nummerierte Liste");
+  setButtonTitle('.ql-list[value="bullet"]', "Liste");
+  setButtonTitle(".ql-blockquote", "Zitat");
+  setButtonTitle(".ql-link", "Link");
+  setButtonTitle(".ql-image", "Bild");
+  setButtonTitle(".ql-clean", "Formatierung entfernen");
+
+  const codeBlockButton = toolbar.querySelector(".ql-code-block");
+  if (codeBlockButton) {
+    codeBlockButton.type = "button";
+    codeBlockButton.classList.add("admin-editor-code-button");
+    codeBlockButton.title = "Codeblock";
+    codeBlockButton.setAttribute("aria-label", "Codeblock");
+    codeBlockButton.setAttribute("data-editor-tool", "code-block");
+    codeBlockButton.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="4 17 10 11 4 5"></polyline>
+        <line x1="12" y1="19" x2="20" y2="19"></line>
+      </svg>
+      <span>Code</span>
+    `;
+  }
+};
+
 const saveActiveProjectFromFields = () => {
   if (
     activeProjectIndex < 0 ||
@@ -239,7 +350,7 @@ const renderProjectList = () => {
     button.className = `list-group-item list-group-item-action admin-project-item${
       index === activeProjectIndex ? " active" : ""
     }`;
-    button.textContent = project.title || `Projekt ${index + 1}`;
+    button.textContent = project.title || `${getCurrentEntryLabel()} ${index + 1}`;
     button.addEventListener("click", () => {
       setActiveProject(index);
     });
@@ -264,7 +375,7 @@ const parseProjectsFromHtml = (content) => {
     return [
       {
         id: `project-${Date.now()}-0`,
-        title: "Projekt 1",
+        title: `${getCurrentEntryLabel()} 1`,
         summary: "",
         body: trimmed,
       },
@@ -280,7 +391,7 @@ const parseProjectsFromHtml = (content) => {
       card.querySelector(".project-section-body")?.innerHTML || "<p><br></p>";
     return {
       id: `project-${Date.now()}-${index}`,
-      title: title || `Projekt ${index + 1}`,
+      title: title || `${getCurrentEntryLabel()} ${index + 1}`,
       summary,
       body,
     };
@@ -297,7 +408,7 @@ const buildProjectsHtml = () => {
 
     const title = document.createElement("h2");
     title.className = "project-section-title h4 fw-bold mb-2";
-    title.textContent = project.title || `Projekt ${index + 1}`;
+    title.textContent = project.title || `${getCurrentEntryLabel()} ${index + 1}`;
 
     const summary = document.createElement("p");
     summary.className = "project-section-summary text-body-secondary mb-3";
@@ -354,6 +465,7 @@ if (
 }
 
 initEditor();
+updateEditorCopy();
 initAdminShell({
   onAuthenticated: () => {
     loadEditablePage();
@@ -389,6 +501,7 @@ if (editorForm && editorPageSelect && editorLoadButton) {
     loadEditablePage();
   });
   editorPageSelect.addEventListener("change", () => {
+    updateEditorCopy();
     const nextUrl = new URL(window.location.href);
     nextUrl.searchParams.set(
       "page",
@@ -411,7 +524,7 @@ if (editorForm && editorPageSelect && editorLoadButton) {
     if (!projects.length) {
       updateStatus(
         editorStatus,
-        "Keine Projekte zum Speichern vorhanden.",
+        `Keine ${getCurrentEntryPlural()} zum Speichern vorhanden.`,
         "error",
       );
       return;
