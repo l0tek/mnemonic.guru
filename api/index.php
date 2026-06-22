@@ -767,6 +767,94 @@ if (isset($_GET["p5js_project_code"])) {
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $action = strtolower(trim((string)($_POST["action"] ?? "")));
+
+    if ($action === "update_p5_project") {
+        $projectSlug = trim(strtolower((string)($_POST["project"] ?? "")));
+        $projectSlug = preg_replace("/[^a-z0-9\-]+/", "", $projectSlug) ?? "";
+        if ($projectSlug === "") {
+            http_response_code(400);
+            echo json_encode(["status" => "ERR", "msg" => "ungueltiges projekt"]);
+            exit;
+        }
+
+        $projectDir = rtrim($p5ProjectsDir, "/") . "/" . $projectSlug;
+        if (!is_dir($projectDir)) {
+            http_response_code(404);
+            echo json_encode(["status" => "ERR", "msg" => "projekt nicht gefunden"]);
+            exit;
+        }
+
+        $file = $_FILES["file"] ?? null;
+        if (is_array($file) && (int)($file["error"] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+            if ((int)($file["error"] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+                http_response_code(400);
+                echo json_encode(["status" => "ERR", "msg" => "datei konnte nicht hochgeladen werden"]);
+                exit;
+            }
+            $size = (int)($file["size"] ?? 0);
+            $extension = strtolower((string)pathinfo((string)($file["name"] ?? ""), PATHINFO_EXTENSION));
+            $tmpName = (string)($file["tmp_name"] ?? "");
+            if ($size <= 0 || $size > MAX_UPLOAD_BYTES) {
+                http_response_code(413);
+                echo json_encode(["status" => "ERR", "msg" => "ungueltige dateigroesse"]);
+                exit;
+            }
+            if (!in_array($extension, ["html", "htm"], true)) {
+                http_response_code(415);
+                echo json_encode(["status" => "ERR", "msg" => "nur html dateien sind erlaubt"]);
+                exit;
+            }
+            if ($tmpName === "" || !is_uploaded_file($tmpName)) {
+                http_response_code(400);
+                echo json_encode(["status" => "ERR", "msg" => "ungueltige upload-temp-datei"]);
+                exit;
+            }
+            $entryRelativePath = resolveP5EntryRelativePath($projectDir);
+            $target = $entryRelativePath !== ""
+                ? $projectDir . "/" . $entryRelativePath
+                : $projectDir . "/index.html";
+            if (!@move_uploaded_file($tmpName, $target)) {
+                http_response_code(500);
+                echo json_encode(["status" => "ERR", "msg" => "datei konnte nicht gespeichert werden"]);
+                exit;
+            }
+        }
+
+        $description = (string)($_POST["description"] ?? "");
+        $snippets = parseP5Snippets((string)($_POST["snippets"] ?? "[]"));
+        if (!writeP5ProjectMetadata($projectDir, $description, $snippets)) {
+            http_response_code(500);
+            echo json_encode(["status" => "ERR", "msg" => "projektmetadaten konnten nicht gespeichert werden"]);
+            exit;
+        }
+        @touch($projectDir);
+        echo json_encode(["status" => "OK", "project" => $projectSlug]);
+        exit;
+    }
+
+    if ($action === "delete_p5_project") {
+        $projectSlug = trim(strtolower((string)($_POST["project"] ?? "")));
+        $projectSlug = preg_replace("/[^a-z0-9\-]+/", "", $projectSlug) ?? "";
+        if ($projectSlug === "") {
+            http_response_code(400);
+            echo json_encode(["status" => "ERR", "msg" => "ungueltiges projekt"]);
+            exit;
+        }
+        $projectDir = rtrim($p5ProjectsDir, "/") . "/" . $projectSlug;
+        if (!is_dir($projectDir)) {
+            http_response_code(404);
+            echo json_encode(["status" => "ERR", "msg" => "projekt nicht gefunden"]);
+            exit;
+        }
+        if (!removeDirectoryRecursive($projectDir)) {
+            http_response_code(500);
+            echo json_encode(["status" => "ERR", "msg" => "projekt konnte nicht geloescht werden"]);
+            exit;
+        }
+        echo json_encode(["status" => "OK", "project" => $projectSlug]);
+        exit;
+    }
+
     if ($action === "upload_p5_file") {
         $projectNameRaw = trim((string)($_POST["project_name"] ?? ""));
         $projectNameSafe = sanitizePathSegment($projectNameRaw);

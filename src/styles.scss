@@ -298,6 +298,15 @@ body.is-loading > :not(#page-loader) {
     display: block;
 }
 
+.latest-project-preview {
+    width: 100%;
+    height: 220px;
+    display: block;
+    border: 0;
+    background: #fff;
+    pointer-events: none;
+}
+
 .latest-work-meta {
     padding: 0.8rem 0.9rem 1rem;
     display: grid;
@@ -828,6 +837,33 @@ body.is-loading > :not(#page-loader) {
     position: static;
     padding-top: 0.75rem;
     padding-bottom: 0.25rem;
+}
+
+.admin-p5-projects {
+    display: grid;
+    gap: 0.65rem;
+}
+
+.admin-p5-project {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.75rem;
+}
+
+.admin-p5-project-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 575.98px) {
+    .admin-p5-project {
+        align-items: stretch;
+        flex-direction: column;
+    }
 }
 
 [data-bs-theme="light"] .admin-editor .ql-toolbar.ql-snow,

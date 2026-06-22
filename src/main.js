@@ -388,6 +388,7 @@ const latestNewsGrid = document.getElementById("latest-news-grid");
 const latestProjectsGrid = document.getElementById("latest-projects-grid");
 const pageEditableContent = document.getElementById("page-editable-content");
 const API_URL = "https://www.mnemonic.guru/api/index.php";
+const API_ORIGIN = new URL(API_URL).origin;
 const IMAGE_PATTERN = /\.(jpg|jpeg|png|gif|webp)$/i;
 const projectPages = [
   { key: "raspi", label: "Raspi", pageUrl: "/raspi.html" },
@@ -1326,7 +1327,16 @@ const renderLatestProjectOverviewCard = (project) => {
       : `${pageMeta.pageUrl}?article=${encodeURIComponent(project.id)}`;
   link.className = "latest-work-link";
 
-  if (project.imageUrl) {
+  if (project.previewUrl) {
+    const preview = document.createElement("iframe");
+    preview.className = "latest-project-preview";
+    preview.src = project.previewUrl;
+    preview.title = `${project.title} – Animation`;
+    preview.loading = "lazy";
+    preview.setAttribute("aria-hidden", "true");
+    preview.tabIndex = -1;
+    link.appendChild(preview);
+  } else if (project.imageUrl) {
     const image = document.createElement("img");
     image.className = "latest-work-image";
     image.src = project.imageUrl;
@@ -1418,6 +1428,10 @@ const fetchLatestP5ProjectOverview = async () => {
     title: `${latestProject.name} - Beschreibung und Quelltext`,
     summary: description,
     codeSnippet,
+    previewUrl: new URL(
+      String(latestProject.entry_url || "/"),
+      API_ORIGIN,
+    ).href,
     imageUrl: "",
     originalIndex: 1,
     pageUpdatedAt: toTimestamp(latestProject.updated_at || ""),
