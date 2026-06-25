@@ -40,9 +40,12 @@
                         </li>
                     </ul>
                     <div class="admin-navbar-meta">
-                        <strong>Editor</strong>
-                        <span>Editierbare Seiten verwalten</span>
+                        <strong id="admin-user-label"></strong>
+                        <span>Editor</span>
                     </div>
+                    <button id="admin-logout" class="btn btn-outline-danger admin-logout d-none" type="button">
+                        Abmelden
+                    </button>
                     <button
                         id="theme-toggle"
                         class="btn btn-outline-secondary theme-toggle admin-navbar-theme"
@@ -57,28 +60,31 @@
 
         <main class="container-fluid py-5 px-3 px-lg-4">
             <section class="admin-shell admin-shell--wide mx-auto">
-                <div class="mb-4">
-                    <p class="text-uppercase text-body-secondary fw-semibold mb-1">
-                        Restricted
-                    </p>
-                    <h1 class="h3 mb-0">Admin Bereich</h1>
-                </div>
-
-                <form id="admin-login-form" class="admin-login-form">
-                    <label class="form-label" for="admin-password">Passwort</label>
+                <form id="admin-login-form" class="admin-login-form admin-login-panel">
+                    <div class="mb-4">
+                        <p class="text-uppercase text-body-secondary fw-semibold mb-1">
+                            Secure Login
+                        </p>
+                        <h1 class="h3 mb-2">Admin Anmeldung</h1>
+                        <p class="text-body-secondary mb-0">
+                            Melde dich an, um Inhalte zu bearbeiten.
+                        </p>
+                    </div>
+                    <label class="form-label" for="admin-username">Benutzer</label>
+                    <input id="admin-username" class="form-control" type="text" autocomplete="username" value="admin" required />
+                    <label class="form-label mt-3" for="admin-password">Passwort</label>
                     <input id="admin-password" class="form-control" type="password" autocomplete="current-password" required />
                     <button class="btn btn-primary w-100 mt-3" type="submit">Anmelden</button>
-                    <p id="admin-login-error" class="text-danger small mt-2 mb-0 d-none">Passwort ist falsch.</p>
+                    <p id="admin-login-status" class="small text-body-secondary mt-3 mb-0 d-none"></p>
+                    <p id="admin-login-error" class="text-danger small mt-2 mb-0 d-none">Login fehlgeschlagen.</p>
                 </form>
 
                 <section id="admin-content" class="d-none" aria-live="polite">
-                    <div class="alert alert-success mb-4" role="status">Zugriff freigegeben.</div>
-
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body">
+                    <div class="admin-panel">
                             <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
                                 <div>
-                                    <h2 class="h5 mb-1">Seiten Editor</h2>
+                                    <p class="text-uppercase text-body-secondary fw-semibold mb-1">Content</p>
+                                    <h1 class="h3 mb-1">Seiten Editor</h1>
                                     <p class="text-body-secondary mb-0">Vorhandener Editor fuer Raspi, esp32, Code und die neue Howto-Seite.</p>
                                 </div>
                                 <a class="btn btn-primary" href="/4meo/editor.html?page=howto">Howto direkt oeffnen</a>
@@ -118,7 +124,6 @@
                                 </div>
                             </form>
                             <p id="admin-editor-status" class="small text-body-secondary mt-3 mb-0">Waehle eine Seite und lade den Inhalt.</p>
-                        </div>
                     </div>
                 </section>
             </section>

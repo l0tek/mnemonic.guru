@@ -10,6 +10,9 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 }
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB
+const ADMIN_SESSION_COOKIE = "mg_admin_session";
+const ADMIN_SESSION_TTL_SECONDS = 60 * 60 * 12;
+const LEGACY_ADMIN_PASSWORD_SHA256 = "7da6572f4d3e3ad6f33e4612d9b2b3228936bd4a3d4bae5e4aaa8c17f86588b9";
 $baseDir = realpath(__DIR__ . "/..");
 $sqliteDir = $baseDir . "/data";
 $sqlitePath = $sqliteDir . "/content.sqlite";
@@ -485,7 +488,207 @@ function getSqliteConnection(string $sqliteDir, string $sqlitePath): PDO
         )"
     );
 
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS admin_users (
+            username TEXT PRIMARY KEY,
+            password_hash TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )"
+    );
+
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS admin_sessions (
+            id TEXT PRIMARY KEY,
+            username TEXT NOT NULL,
+            token_hash TEXT NOT NULL UNIQUE,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            expires_at INTEGER NOT NULL,
+            last_seen_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            user_agent TEXT NOT NULL DEFAULT ''
+        )"
+    );
+
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS admin_login_attempts (
+            ip TEXT PRIMARY KEY,
+            failures INTEGER NOT NULL DEFAULT 0,
+            last_failure_at INTEGER NOT NULL DEFAULT 0
+        )"
+    );
+
     return $pdo;
+}
+
+function jsonResponse(array $payload, int $statusCode = 200): void
+{
+    http_response_code($statusCode);
+    echo json_encode($payload);
+    exit;
+}
+
+function getCookieOptions(int $expires): array
+{
+    $isSecure = (!empty($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] !== "off")
+        || strtolower((string)($_SERVER["HTTP_X_FORWARDED_PROTO"] ?? "")) === "https";
+
+    return [
+        "expires" => $expires,
+        "path" => "/",
+        "secure" => $isSecure,
+        "httponly" => true,
+        "samesite" => "Strict",
+    ];
+}
+
+function clearAdminSessionCookie(): void
+{
+    setcookie(ADMIN_SESSION_COOKIE, "", getCookieOptions(time() - 3600));
+}
+
+function ensureDefaultAdminUser(PDO $pdo): void
+{
+    $username = trim((string)(getenv("ADMIN_USER") ?: "admin"));
+    if ($username === "") {
+        $username = "admin";
+    }
+
+    $statement = $pdo->prepare("SELECT username FROM admin_users WHERE username = :username LIMIT 1");
+    $statement->execute([":username" => $username]);
+    if ($statement->fetch()) {
+        return;
+    }
+
+    $password = (string)(getenv("ADMIN_PASSWORD") ?: "");
+    $passwordHash = $password !== ""
+        ? password_hash($password, PASSWORD_DEFAULT)
+        : password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT);
+
+    $insert = $pdo->prepare(
+        "INSERT INTO admin_users (username, password_hash, created_at, updated_at)
+         VALUES (:username, :password_hash, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
+    );
+    $insert->execute([
+        ":username" => $username,
+        ":password_hash" => $passwordHash,
+    ]);
+}
+
+function getClientIp(): string
+{
+    return trim((string)($_SERVER["REMOTE_ADDR"] ?? "unknown"));
+}
+
+function assertLoginAllowed(PDO $pdo): void
+{
+    $ip = getClientIp();
+    $statement = $pdo->prepare("SELECT failures, last_failure_at FROM admin_login_attempts WHERE ip = :ip LIMIT 1");
+    $statement->execute([":ip" => $ip]);
+    $row = $statement->fetch();
+    if (!$row) {
+        return;
+    }
+
+    $failures = (int)($row["failures"] ?? 0);
+    $lastFailure = (int)($row["last_failure_at"] ?? 0);
+    if ($failures >= 8 && (time() - $lastFailure) < 900) {
+        jsonResponse(["status" => "ERR", "msg" => "zu viele login-versuche"], 429);
+    }
+}
+
+function recordLoginFailure(PDO $pdo): void
+{
+    $ip = getClientIp();
+    $statement = $pdo->prepare(
+        "INSERT INTO admin_login_attempts (ip, failures, last_failure_at)
+         VALUES (:ip, 1, :last_failure_at)
+         ON CONFLICT(ip) DO UPDATE SET
+             failures = failures + 1,
+             last_failure_at = excluded.last_failure_at"
+    );
+    $statement->execute([
+        ":ip" => $ip,
+        ":last_failure_at" => time(),
+    ]);
+}
+
+function clearLoginFailures(PDO $pdo): void
+{
+    $statement = $pdo->prepare("DELETE FROM admin_login_attempts WHERE ip = :ip");
+    $statement->execute([":ip" => getClientIp()]);
+}
+
+function createAdminSession(PDO $pdo, string $username): array
+{
+    $token = bin2hex(random_bytes(32));
+    $sessionId = bin2hex(random_bytes(16));
+    $expiresAt = time() + ADMIN_SESSION_TTL_SECONDS;
+    $statement = $pdo->prepare(
+        "INSERT INTO admin_sessions (id, username, token_hash, created_at, expires_at, last_seen_at, user_agent)
+         VALUES (:id, :username, :token_hash, CURRENT_TIMESTAMP, :expires_at, CURRENT_TIMESTAMP, :user_agent)"
+    );
+    $statement->execute([
+        ":id" => $sessionId,
+        ":username" => $username,
+        ":token_hash" => hash("sha256", $token),
+        ":expires_at" => $expiresAt,
+        ":user_agent" => substr((string)($_SERVER["HTTP_USER_AGENT"] ?? ""), 0, 255),
+    ]);
+    setcookie(ADMIN_SESSION_COOKIE, $token, getCookieOptions($expiresAt));
+    return [
+        "username" => $username,
+        "expires_at" => $expiresAt,
+    ];
+}
+
+function getCurrentAdminSession(PDO $pdo): ?array
+{
+    $token = (string)($_COOKIE[ADMIN_SESSION_COOKIE] ?? "");
+    if ($token === "" || !preg_match('/^[a-f0-9]{64}$/', $token)) {
+        return null;
+    }
+
+    $statement = $pdo->prepare(
+        "SELECT id, username, expires_at FROM admin_sessions
+         WHERE token_hash = :token_hash
+         LIMIT 1"
+    );
+    $statement->execute([":token_hash" => hash("sha256", $token)]);
+    $session = $statement->fetch();
+    if (!$session) {
+        clearAdminSessionCookie();
+        return null;
+    }
+
+    if ((int)($session["expires_at"] ?? 0) < time()) {
+        $delete = $pdo->prepare("DELETE FROM admin_sessions WHERE id = :id");
+        $delete->execute([":id" => $session["id"]]);
+        clearAdminSessionCookie();
+        return null;
+    }
+
+    $update = $pdo->prepare("UPDATE admin_sessions SET last_seen_at = CURRENT_TIMESTAMP WHERE id = :id");
+    $update->execute([":id" => $session["id"]]);
+    return $session;
+}
+
+function requireAdminSession(PDO $pdo): array
+{
+    $session = getCurrentAdminSession($pdo);
+    if (!$session) {
+        jsonResponse(["status" => "ERR", "msg" => "nicht angemeldet"], 401);
+    }
+    return $session;
+}
+
+function destroyCurrentAdminSession(PDO $pdo): void
+{
+    $token = (string)($_COOKIE[ADMIN_SESSION_COOKIE] ?? "");
+    if ($token !== "") {
+        $statement = $pdo->prepare("DELETE FROM admin_sessions WHERE token_hash = :token_hash");
+        $statement->execute([":token_hash" => hash("sha256", $token)]);
+    }
+    clearAdminSessionCookie();
 }
 
 function ensurePageSeed(PDO $pdo, string $pageKey, string $fallbackContent): void
@@ -652,6 +855,33 @@ function fetchArticleImageUrl(string $articleUrl): string
     return $cache[$articleUrl];
 }
 
+if (isset($_GET["admin_session"])) {
+    if (!extension_loaded("pdo_sqlite")) {
+        jsonResponse(["status" => "ERR", "msg" => "sqlite nicht verfuegbar"], 500);
+    }
+
+    try {
+        $pdo = getSqliteConnection($sqliteDir, $sqlitePath);
+        ensureDefaultAdminUser($pdo);
+        $session = getCurrentAdminSession($pdo);
+    } catch (Throwable $exception) {
+        jsonResponse(["status" => "ERR", "msg" => "session konnte nicht geprueft werden"], 500);
+    }
+
+    if (!$session) {
+        jsonResponse(["status" => "OK", "authenticated" => false]);
+    }
+
+    jsonResponse([
+        "status" => "OK",
+        "authenticated" => true,
+        "user" => [
+            "username" => (string)$session["username"],
+        ],
+        "expires_at" => (int)$session["expires_at"],
+    ]);
+}
+
 if (isset($_GET["page_content"])) {
     $pageKey = strtolower(trim((string)($_GET["page"] ?? "")));
     if (!isset($editablePages[$pageKey])) {
@@ -767,6 +997,100 @@ if (isset($_GET["p5js_project_code"])) {
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $action = strtolower(trim((string)($_POST["action"] ?? "")));
+
+    if ($action === "admin_login") {
+        if (!extension_loaded("pdo_sqlite")) {
+            jsonResponse(["status" => "ERR", "msg" => "sqlite nicht verfuegbar"], 500);
+        }
+
+        $username = trim((string)($_POST["username"] ?? "admin"));
+        $password = (string)($_POST["password"] ?? "");
+        if ($username === "" || $password === "") {
+            jsonResponse(["status" => "ERR", "msg" => "benutzername und passwort erforderlich"], 400);
+        }
+
+        try {
+            $pdo = getSqliteConnection($sqliteDir, $sqlitePath);
+            ensureDefaultAdminUser($pdo);
+            assertLoginAllowed($pdo);
+
+            $statement = $pdo->prepare("SELECT username, password_hash FROM admin_users WHERE username = :username LIMIT 1");
+            $statement->execute([":username" => $username]);
+            $user = $statement->fetch();
+
+            $valid = $user && password_verify($password, (string)$user["password_hash"]);
+            if (!$valid && hash("sha256", $password) === LEGACY_ADMIN_PASSWORD_SHA256) {
+                $valid = true;
+                if (!$user) {
+                    $insert = $pdo->prepare(
+                        "INSERT INTO admin_users (username, password_hash, created_at, updated_at)
+                         VALUES (:username, :password_hash, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                         ON CONFLICT(username) DO UPDATE SET
+                             password_hash = excluded.password_hash,
+                             updated_at = CURRENT_TIMESTAMP"
+                    );
+                    $insert->execute([
+                        ":username" => $username,
+                        ":password_hash" => password_hash($password, PASSWORD_DEFAULT),
+                    ]);
+                } else {
+                    $update = $pdo->prepare(
+                        "UPDATE admin_users
+                         SET password_hash = :password_hash, updated_at = CURRENT_TIMESTAMP
+                         WHERE username = :username"
+                    );
+                    $update->execute([
+                        ":username" => $username,
+                        ":password_hash" => password_hash($password, PASSWORD_DEFAULT),
+                    ]);
+                }
+            }
+
+            if (!$valid) {
+                recordLoginFailure($pdo);
+                jsonResponse(["status" => "ERR", "msg" => "login fehlgeschlagen"], 401);
+            }
+
+            clearLoginFailures($pdo);
+            $session = createAdminSession($pdo, $username);
+            jsonResponse([
+                "status" => "OK",
+                "authenticated" => true,
+                "user" => [
+                    "username" => $session["username"],
+                ],
+                "expires_at" => $session["expires_at"],
+            ]);
+        } catch (Throwable $exception) {
+            jsonResponse(["status" => "ERR", "msg" => "login konnte nicht verarbeitet werden"], 500);
+        }
+    }
+
+    if ($action === "admin_logout") {
+        if (extension_loaded("pdo_sqlite")) {
+            try {
+                $pdo = getSqliteConnection($sqliteDir, $sqlitePath);
+                destroyCurrentAdminSession($pdo);
+            } catch (Throwable $exception) {
+                clearAdminSessionCookie();
+            }
+        } else {
+            clearAdminSessionCookie();
+        }
+        jsonResponse(["status" => "OK"]);
+    }
+
+    if (!extension_loaded("pdo_sqlite")) {
+        jsonResponse(["status" => "ERR", "msg" => "sqlite nicht verfuegbar"], 500);
+    }
+
+    try {
+        $authPdo = getSqliteConnection($sqliteDir, $sqlitePath);
+        ensureDefaultAdminUser($authPdo);
+        requireAdminSession($authPdo);
+    } catch (Throwable $exception) {
+        jsonResponse(["status" => "ERR", "msg" => "authentifizierung fehlgeschlagen"], 401);
+    }
 
     if ($action === "update_p5_project") {
         $projectSlug = trim(strtolower((string)($_POST["project"] ?? "")));

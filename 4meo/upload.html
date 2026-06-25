@@ -40,9 +40,12 @@
                         </li>
                     </ul>
                     <div class="admin-navbar-meta">
-                        <strong>Uploads</strong>
-                        <span>Bilder und p5.js Dateien</span>
+                        <strong id="admin-user-label"></strong>
+                        <span>Uploads</span>
                     </div>
+                    <button id="admin-logout" class="btn btn-outline-danger admin-logout d-none" type="button">
+                        Abmelden
+                    </button>
                     <button
                         id="theme-toggle"
                         class="btn btn-outline-secondary theme-toggle admin-navbar-theme"
@@ -57,26 +60,34 @@
 
         <main class="container-fluid py-5 px-3 px-lg-4">
             <section class="admin-shell admin-shell--wide mx-auto">
-                <div class="mb-4">
-                    <p class="text-uppercase text-body-secondary fw-semibold mb-1">
-                        Restricted
-                    </p>
-                    <h1 class="h3 mb-0">Admin Bereich</h1>
-                </div>
-
-                <form id="admin-login-form" class="admin-login-form">
-                    <label class="form-label" for="admin-password">Passwort</label>
+                <form id="admin-login-form" class="admin-login-form admin-login-panel">
+                    <div class="mb-4">
+                        <p class="text-uppercase text-body-secondary fw-semibold mb-1">
+                            Secure Login
+                        </p>
+                        <h1 class="h3 mb-2">Admin Anmeldung</h1>
+                        <p class="text-body-secondary mb-0">
+                            Melde dich an, um Dateien hochzuladen.
+                        </p>
+                    </div>
+                    <label class="form-label" for="admin-username">Benutzer</label>
+                    <input id="admin-username" class="form-control" type="text" autocomplete="username" value="admin" required />
+                    <label class="form-label mt-3" for="admin-password">Passwort</label>
                     <input id="admin-password" class="form-control" type="password" autocomplete="current-password" required />
                     <button class="btn btn-primary w-100 mt-3" type="submit">Anmelden</button>
-                    <p id="admin-login-error" class="text-danger small mt-2 mb-0 d-none">Passwort ist falsch.</p>
+                    <p id="admin-login-status" class="small text-body-secondary mt-3 mb-0 d-none"></p>
+                    <p id="admin-login-error" class="text-danger small mt-2 mb-0 d-none">Login fehlgeschlagen.</p>
                 </form>
 
                 <section id="admin-content" class="d-none" aria-live="polite">
-                    <div class="alert alert-success mb-4" role="status">Zugriff freigegeben.</div>
+                    <div class="admin-section-heading mb-4">
+                        <p class="text-uppercase text-body-secondary fw-semibold mb-1">Assets</p>
+                        <h1 class="h3 mb-2">Uploads verwalten</h1>
+                        <p class="text-body-secondary mb-0">Bilder und p5.js Projekte zentral pflegen.</p>
+                    </div>
 
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body">
-                            <h2 class="h5 mb-3">Bilder Upload</h2>
+                    <div class="admin-panel">
+                            <h2 class="h5 mb-3">Bilder</h2>
                             <form id="admin-upload-form" class="admin-upload-form">
                                 <div class="mb-3">
                                     <label class="form-label" for="upload-category">Kategorie</label>
@@ -93,11 +104,9 @@
                                 <button class="btn btn-primary w-100" type="submit">Bild hochladen</button>
                             </form>
                             <p id="admin-upload-status" class="small text-body-secondary mt-3 mb-0">Waehle Kategorie und Bild fuer den Upload.</p>
-                        </div>
                     </div>
 
-                    <div class="card border-0 shadow-sm mt-4">
-                        <div class="card-body">
+                    <div class="admin-panel mt-4">
                             <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
                                 <h2 id="admin-p5-form-title" class="h5 mb-0">p5.js Datei Upload</h2>
                                 <button id="admin-p5-edit-cancel" class="btn btn-sm btn-outline-secondary d-none" type="button">Bearbeiten abbrechen</button>
@@ -126,18 +135,15 @@
                                 <button id="admin-p5-submit" class="btn btn-primary w-100" type="submit">Datei hochladen</button>
                             </form>
                             <p id="admin-p5-upload-status" class="small text-body-secondary mt-3 mb-0">Lade genau eine HTML-Datei mit optionalem Text und Codeabschnitten hoch.</p>
-                        </div>
                     </div>
 
-                    <div class="card border-0 shadow-sm mt-4">
-                        <div class="card-body">
+                    <div class="admin-panel mt-4">
                             <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
                                 <h2 class="h5 mb-0">Bestehende p5.js Projekte</h2>
                                 <button id="admin-p5-projects-refresh" class="btn btn-sm btn-outline-secondary" type="button">Aktualisieren</button>
                             </div>
                             <div id="admin-p5-projects" class="admin-p5-projects"></div>
                             <p id="admin-p5-projects-status" class="small text-body-secondary mt-3 mb-0">Projekte werden geladen ...</p>
-                        </div>
                     </div>
                 </section>
             </section>

@@ -3,6 +3,7 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./nav-dropdowns.js";
 import * as THREE from "three";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
+import { js as beautifyJs } from "js-beautify";
 
 const pageLoader = document.getElementById("page-loader");
 const newsModalLoader = document.getElementById("news-modal-loader");
@@ -690,7 +691,7 @@ const getPageMetaByKey = (pageKey) => {
     return {
       key: "p5js",
       label: "p5.js",
-      pageUrl: "/p5js.html",
+      pageUrl: "/code.html",
     };
   }
 
@@ -701,6 +702,383 @@ const getPageMetaByKey = (pageKey) => {
       pageUrl: `/${pageKey}.html`,
     }
   );
+};
+
+const formatJavaScriptSource = (source) => {
+  return beautifyJs(String(source || ""), {
+    indent_size: 2,
+    indent_char: " ",
+    preserve_newlines: true,
+    max_preserve_newlines: 2,
+    end_with_newline: true,
+    space_in_empty_paren: false,
+    space_after_anon_function: true,
+  });
+};
+
+const createSourceCodeBlock = ({
+  title = "Source Code",
+  rawCode = "",
+  lang = "javascript",
+}) => {
+  const normalizedCode = String(rawCode || "").replace(/\s+$/g, "");
+  const lines = normalizedCode ? normalizedCode.split("\n") : [""];
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "code-block code-source-block relative my-4 rounded-lg overflow-hidden";
+  wrapper.dataset.lang = lang;
+
+  const header = document.createElement("div");
+  header.className = "code-header";
+  header.innerHTML = `
+    <div class="code-header-title">
+      <svg class="code-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="16 18 22 12 16 6"></polyline>
+        <polyline points="8 6 2 12 8 18"></polyline>
+      </svg>
+      <span></span>
+    </div>
+    <button class="code-copy button" type="button" aria-label="Code kopieren">
+      <svg class="code-copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>
+    </button>
+  `;
+  header.querySelector("span").textContent = title;
+
+  const highlight = document.createElement("div");
+  highlight.className = "highlight";
+
+  const pre = document.createElement("pre");
+  pre.tabIndex = 0;
+  pre.className = "chroma howto-code-block";
+
+  const code = document.createElement("code");
+  code.className = `language-${lang}`;
+  code.dataset.lang = lang;
+
+  lines.forEach((line) => {
+    const lineElement = document.createElement("span");
+    lineElement.className = "line";
+    lineElement.dataset.promptChar = "";
+
+    const content = document.createElement("span");
+    content.className = "cl";
+    content.textContent = line;
+
+    lineElement.appendChild(content);
+    code.appendChild(lineElement);
+  });
+
+  pre.appendChild(code);
+  highlight.appendChild(pre);
+  wrapper.append(header, highlight);
+  return wrapper;
+};
+
+const fetchP5Projects = async () => {
+  const response = await fetch(`${API_URL}?p5js_projects=1`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  const payload = await response.json();
+  if (String(payload?.status || "").toUpperCase() !== "OK") {
+    throw new Error(payload?.msg || "Unerwartete API-Antwort");
+  }
+  return Array.isArray(payload.projects) ? payload.projects : [];
+};
+
+const fetchP5ProjectCode = async (slug) => {
+  const response = await fetch(
+    `${API_URL}?p5js_project_code=1&project=${encodeURIComponent(slug)}`,
+    { cache: "no-store" },
+  );
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  const payload = await response.json();
+  if (String(payload?.status || "").toUpperCase() !== "OK") {
+    throw new Error(payload?.msg || "Unerwartete API-Antwort");
+  }
+  return payload;
+};
+
+const renderCodePortfolio = async (container, content) => {
+  if (!container) {
+    return false;
+  }
+
+  const articles = parseProjectCardsFromContent(content, "code").sort(
+    (a, b) => b.originalIndex - a.originalIndex,
+  );
+  let p5Projects = [];
+  let p5Error = "";
+
+  try {
+    p5Projects = await fetchP5Projects();
+  } catch (error) {
+    console.error("p5.js Projekte konnten nicht geladen werden:", error);
+    p5Error = error.message;
+  }
+
+  if (!articles.length && !p5Projects.length) {
+    return false;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const requestedArticleId = params.get("article") || "";
+  const requestedP5Slug = params.get("p5") || "";
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "code-portfolio";
+
+  const grid = document.createElement("div");
+  grid.className = "code-portfolio-grid";
+
+  const detail = document.createElement("article");
+  detail.className = "code-portfolio-detail d-none";
+
+  const detailBody = document.createElement("div");
+  detailBody.className = "code-portfolio-detail-body";
+  detail.appendChild(detailBody);
+
+  const setActiveButton = (button) => {
+    const buttons = grid.querySelectorAll(".code-portfolio-open");
+    buttons.forEach((entry) => {
+      entry.classList.remove("active");
+      entry.setAttribute("aria-expanded", "false");
+    });
+    button.classList.add("active");
+    button.setAttribute("aria-expanded", "true");
+  };
+
+  const showDetail = (button, shouldScroll = true) => {
+    setActiveButton(button);
+    detail.classList.remove("d-none");
+    if (shouldScroll) {
+      detail.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  const renderArticleDetail = (article, button, shouldScroll = true) => {
+    detailBody.innerHTML = "";
+
+    const title = document.createElement("h2");
+    title.className = "h4 fw-bold mb-3";
+    title.textContent = article.title;
+
+    const body = document.createElement("div");
+    body.className = "raspi-article-detail-body";
+    body.innerHTML = article.bodyHtml || "<p>Kein Inhalt vorhanden.</p>";
+    normalizeHowtoCodeBlocks(body);
+    bindHowtoCodeCopyButtons(body);
+
+    detailBody.append(title, body);
+    showDetail(button, shouldScroll);
+  };
+
+  const renderP5Detail = async (project, button, shouldScroll = true) => {
+    detailBody.innerHTML = "";
+
+    const title = document.createElement("h2");
+    title.className = "h4 fw-bold mb-3";
+    title.textContent = project.name;
+
+    const preview = document.createElement("iframe");
+    preview.className = "code-portfolio-detail-preview";
+    preview.src = new URL(String(project.entry_url || "/"), API_ORIGIN).href;
+    preview.title = `${project.name} Vorschau`;
+    preview.loading = "lazy";
+
+    const actions = document.createElement("div");
+    actions.className = "d-flex flex-wrap gap-2 mb-3";
+
+    const openLink = document.createElement("a");
+    openLink.className = "btn btn-sm btn-outline-primary";
+    openLink.href = preview.src;
+    openLink.target = "_blank";
+    openLink.rel = "noopener noreferrer";
+    openLink.textContent = "Im neuen Tab";
+    actions.appendChild(openLink);
+
+    const description = document.createElement("p");
+    description.className = "text-body-secondary mb-3";
+    description.textContent =
+      String(project.description || "").trim() || "p5.js Projekt";
+
+    const status = document.createElement("p");
+    status.className = "small text-body-secondary mb-0";
+    status.textContent = "Lade Source Code...";
+
+    const source = document.createElement("div");
+    source.className = "code-portfolio-source";
+
+    detailBody.append(title, preview, actions, description, status, source);
+    showDetail(button, shouldScroll);
+
+    try {
+      const payload = await fetchP5ProjectCode(project.slug);
+      const payloadDescription = String(payload?.description || "").trim();
+      if (payloadDescription) {
+        description.textContent = payloadDescription;
+      }
+
+      const snippets = Array.isArray(payload?.snippets)
+        ? payload.snippets
+        : [];
+      const files = snippets.length
+        ? snippets
+        : payload?.file
+          ? [payload.file]
+          : [];
+
+      source.innerHTML = "";
+      if (!files.length) {
+        status.textContent = "Kein Source Code vorhanden.";
+        return;
+      }
+
+      files.forEach((file) => {
+        const language = String(file.language || "javascript");
+        const content =
+          language.toLowerCase().includes("javascript") ||
+          String(file.path || "").endsWith(".js")
+            ? formatJavaScriptSource(file.content || "")
+            : String(file.content || "");
+        source.appendChild(
+          createSourceCodeBlock({
+            title: file.path || "sketch.js",
+            rawCode: content,
+            lang: language,
+          }),
+        );
+      });
+      bindHowtoCodeCopyButtons(source);
+      status.textContent = `${files.length} Source-Datei(en) geladen.`;
+      status.classList.remove("text-body-secondary");
+      status.classList.add("text-success");
+    } catch (error) {
+      console.error("p5.js Source Code konnte nicht geladen werden:", error);
+      status.textContent = `Fehler beim Laden: ${error.message}`;
+      status.classList.remove("text-body-secondary");
+      status.classList.add("text-danger");
+    }
+  };
+
+  let autoOpen = null;
+
+  articles.forEach((article) => {
+    const card = document.createElement("article");
+    card.className = "code-portfolio-card";
+
+    if (article.imageUrl) {
+      const image = document.createElement("img");
+      image.className = "code-portfolio-image";
+      image.loading = "lazy";
+      image.alt = article.title;
+      image.src = article.imageUrl;
+      card.appendChild(image);
+    }
+
+    const body = document.createElement("div");
+    body.className = "code-portfolio-card-body";
+
+    const label = document.createElement("span");
+    label.className = "code-portfolio-label";
+    label.textContent = "Code";
+
+    const title = document.createElement("h3");
+    title.className = "h5 fw-bold mb-2";
+    title.textContent = article.title;
+
+    const summary = document.createElement("p");
+    summary.className = "text-body-secondary mb-3";
+    summary.textContent = article.summary || "Kein Kurztext vorhanden.";
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn btn-outline-primary code-portfolio-open";
+    button.textContent = "Details";
+    button.setAttribute("aria-expanded", "false");
+    button.addEventListener("click", () => {
+      renderArticleDetail(article, button);
+    });
+
+    if (requestedArticleId && requestedArticleId === article.id) {
+      autoOpen = () => renderArticleDetail(article, button, false);
+    }
+
+    body.append(label, title, summary, button);
+    card.appendChild(body);
+    grid.appendChild(card);
+  });
+
+  p5Projects.forEach((project) => {
+    const card = document.createElement("article");
+    card.className = "code-portfolio-card";
+
+    const preview = document.createElement("iframe");
+    preview.className = "code-portfolio-preview";
+    preview.src = new URL(String(project.entry_url || "/"), API_ORIGIN).href;
+    preview.title = `${project.name} Vorschau`;
+    preview.loading = "lazy";
+    preview.setAttribute("aria-hidden", "true");
+    preview.tabIndex = -1;
+    card.appendChild(preview);
+
+    const body = document.createElement("div");
+    body.className = "code-portfolio-card-body";
+
+    const label = document.createElement("span");
+    label.className = "code-portfolio-label";
+    label.textContent = "p5.js";
+
+    const title = document.createElement("h3");
+    title.className = "h5 fw-bold mb-2";
+    title.textContent = project.name;
+
+    const summary = document.createElement("p");
+    summary.className = "text-body-secondary mb-3";
+    summary.textContent =
+      String(project.description || "").trim() || "Interaktive Browser-Skizze.";
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn btn-outline-primary code-portfolio-open";
+    button.textContent = "Details";
+    button.setAttribute("aria-expanded", "false");
+    button.addEventListener("click", () => {
+      void renderP5Detail(project, button);
+    });
+
+    if (requestedP5Slug && requestedP5Slug === project.slug) {
+      autoOpen = () => {
+        void renderP5Detail(project, button, false);
+      };
+    }
+
+    body.append(label, title, summary, button);
+    card.appendChild(body);
+    grid.appendChild(card);
+  });
+
+  if (p5Error) {
+    const error = document.createElement("p");
+    error.className = "small text-danger mb-0";
+    error.textContent = `p5.js konnte nicht geladen werden: ${p5Error}`;
+    wrapper.appendChild(error);
+  }
+
+  wrapper.append(grid, detail);
+  container.innerHTML = "";
+  container.appendChild(wrapper);
+  if (autoOpen) {
+    autoOpen();
+  }
+  return true;
 };
 
 const renderProjectArticleCards = (container, pageKey, content) => {
@@ -1302,6 +1680,9 @@ const loadEditablePageContent = async () => {
     if (pageKey === "howto" && renderHowtoPage(pageEditableContent, pageKey, content)) {
       return;
     }
+    if (pageKey === "code" && (await renderCodePortfolio(pageEditableContent, content))) {
+      return;
+    }
     if (renderProjectArticleCards(pageEditableContent, pageKey, content)) {
       return;
     }
@@ -1323,7 +1704,7 @@ const renderLatestProjectOverviewCard = (project) => {
   const link = document.createElement("a");
   link.href =
     project.pageKey === "p5js"
-      ? pageMeta.pageUrl
+      ? `${pageMeta.pageUrl}?p5=${encodeURIComponent(String(project.slug || project.id).replace(/^p5js-/, ""))}`
       : `${pageMeta.pageUrl}?article=${encodeURIComponent(project.id)}`;
   link.className = "latest-work-link";
 
@@ -1380,18 +1761,7 @@ const renderLatestProjectOverviewCard = (project) => {
 };
 
 const fetchLatestP5ProjectOverview = async () => {
-  const response = await fetch(`${API_URL}?p5js_projects=1`, {
-    cache: "no-store",
-  });
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
-  }
-  const payload = await response.json();
-  if (String(payload?.status || "").toUpperCase() !== "OK") {
-    throw new Error(payload?.msg || "Unerwartete API-Antwort");
-  }
-
-  const projects = Array.isArray(payload.projects) ? payload.projects : [];
+  const projects = await fetchP5Projects();
   const latestProject = projects[0];
   if (!latestProject) {
     return null;
@@ -1400,17 +1770,7 @@ const fetchLatestP5ProjectOverview = async () => {
   let codeSnippet = "";
   let description = String(latestProject.description || "");
   try {
-    const codeResponse = await fetch(
-      `${API_URL}?p5js_project_code=1&project=${encodeURIComponent(latestProject.slug)}`,
-      { cache: "no-store" },
-    );
-    if (!codeResponse.ok) {
-      throw new Error(`HTTP ${codeResponse.status}`);
-    }
-    const codePayload = await codeResponse.json();
-    if (String(codePayload?.status || "").toUpperCase() !== "OK") {
-      throw new Error(codePayload?.msg || "Unerwartete API-Antwort");
-    }
+    const codePayload = await fetchP5ProjectCode(latestProject.slug);
     description =
       String(codePayload?.description || "").trim() || description;
     const snippets = Array.isArray(codePayload?.snippets)
@@ -1426,6 +1786,7 @@ const fetchLatestP5ProjectOverview = async () => {
     id: `p5js-${latestProject.slug}`,
     pageKey: "p5js",
     title: `${latestProject.name} - Beschreibung und Quelltext`,
+    slug: latestProject.slug,
     summary: description,
     codeSnippet,
     previewUrl: new URL(

@@ -4,6 +4,7 @@ import "./nav-dropdowns.js";
 
 const STORAGE_KEY = "theme-preference";
 const API_URL = "https://www.mnemonic.guru/api/index.php";
+const API_ORIGIN = new URL(API_URL).origin;
 const IMAGE_PATTERN = /\.(jpg|jpeg|png|gif|webp)$/i;
 const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
 const themeToggleButton = document.getElementById("theme-toggle");
@@ -226,6 +227,52 @@ const renderRaspiPreviewIntoLabCard = async () => {
   }
 };
 
+const renderCodePreviewIntoLabCard = async () => {
+  const codeLink = document.querySelector('a.btn[href="/code.html"]');
+  const codeCard = codeLink?.closest(".gallery-hero-card");
+  const media = codeCard?.querySelector(".gallery-hero-media");
+  if (!media) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}?p5js_projects=1`, {
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const payload = await response.json();
+    if (String(payload?.status || "").toUpperCase() !== "OK") {
+      throw new Error(payload?.msg || "Unerwartete API-Antwort");
+    }
+
+    const projects = Array.isArray(payload.projects) ? payload.projects : [];
+    const project = projects[0];
+    if (!project?.entry_url) {
+      return;
+    }
+
+    const preview = document.createElement("iframe");
+    preview.className = "gallery-hero-preview";
+    preview.src = new URL(String(project.entry_url), API_ORIGIN).href;
+    preview.title = `${project.name || "p5.js"} Vorschau`;
+    preview.loading = "lazy";
+    preview.setAttribute("aria-hidden", "true");
+    preview.tabIndex = -1;
+
+    media.classList.remove("is-empty");
+    media.innerHTML = "";
+    media.appendChild(preview);
+
+    if (project.slug && codeLink) {
+      codeLink.href = `/code.html?p5=${encodeURIComponent(project.slug)}`;
+    }
+  } catch (error) {
+    console.error("Lab code preview failed:", error);
+  }
+};
+
 applyTheme(getPreferredTheme());
 
 if (themeToggleButton) {
@@ -246,3 +293,4 @@ prefersDark.addEventListener("change", (event) => {
 
 renderHub();
 renderRaspiPreviewIntoLabCard();
+renderCodePreviewIntoLabCard();

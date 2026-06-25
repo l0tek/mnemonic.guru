@@ -2,8 +2,6 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
 export const STORAGE_KEY = "theme-preference";
 export const ADMIN_AUTH_KEY = "admin-authenticated";
-export const ADMIN_PASSWORD_HASH =
-  "7da6572f4d3e3ad6f33e4612d9b2b3228936bd4a3d4bae5e4aaa8c17f86588b9";
 export const API_URL = new URL("/api/index.php", window.location.origin).toString();
 
 const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
@@ -27,13 +25,6 @@ const applyTheme = (theme, themeToggleButton) => {
   themeToggleButton.innerHTML = `<span class="theme-icon" aria-hidden="true">${icon}</span>`;
   themeToggleButton.setAttribute("aria-label", nextLabel);
   themeToggleButton.setAttribute("aria-pressed", String(theme === "dark"));
-};
-
-const hashText = async (value) => {
-  const textBytes = new TextEncoder().encode(value);
-  const digest = await crypto.subtle.digest("SHA-256", textBytes);
-  const digestBytes = Array.from(new Uint8Array(digest));
-  return digestBytes.map((byte) => byte.toString(16).padStart(2, "0")).join("");
 };
 
 export const updateStatus = (element, text, tone = "neutral") => {
@@ -83,16 +74,36 @@ export const isAuthenticated = () => {
 export const initAdminShell = ({ onAuthenticated } = {}) => {
   const themeToggleButton = document.getElementById("theme-toggle");
   const loginForm = document.getElementById("admin-login-form");
+  const usernameInput = document.getElementById("admin-username");
   const passwordInput = document.getElementById("admin-password");
   const loginError = document.getElementById("admin-login-error");
+  const loginStatus = document.getElementById("admin-login-status");
   const adminContent = document.getElementById("admin-content");
+  const adminLogoutButton = document.getElementById("admin-logout");
+  const adminUserLabel = document.getElementById("admin-user-label");
+  let authenticatedCallbackRan = false;
 
-  const setAuthenticatedState = (authenticated) => {
+  const setLoginMessage = (message, tone = "neutral") => {
+    if (loginStatus) {
+      updateStatus(loginStatus, message, tone);
+      loginStatus.classList.toggle("d-none", !message);
+    }
+    if (loginError) {
+      loginError.classList.add("d-none");
+    }
+  };
+
+  const setAuthenticatedState = (authenticated, user = null) => {
     if (authenticated) {
       loginForm?.classList.add("d-none");
       adminContent?.classList.remove("d-none");
+      adminLogoutButton?.classList.remove("d-none");
+      if (adminUserLabel) {
+        adminUserLabel.textContent = user?.username || "admin";
+      }
       sessionStorage.setItem(ADMIN_AUTH_KEY, "true");
-      if (onAuthenticated) {
+      if (onAuthenticated && !authenticatedCallbackRan) {
+        authenticatedCallbackRan = true;
         onAuthenticated();
       }
       return;
@@ -100,7 +111,28 @@ export const initAdminShell = ({ onAuthenticated } = {}) => {
 
     loginForm?.classList.remove("d-none");
     adminContent?.classList.add("d-none");
+    adminLogoutButton?.classList.add("d-none");
+    if (adminUserLabel) {
+      adminUserLabel.textContent = "";
+    }
     sessionStorage.removeItem(ADMIN_AUTH_KEY);
+    authenticatedCallbackRan = false;
+  };
+
+  const checkSession = async () => {
+    setLoginMessage("Session wird geprueft ...");
+    try {
+      const response = await fetch(`${API_URL}?admin_session=1`, {
+        cache: "no-store",
+        credentials: "same-origin",
+      });
+      const result = await parseApiResponse(response);
+      setAuthenticatedState(Boolean(result.authenticated), result.user || null);
+      setLoginMessage("");
+    } catch {
+      setAuthenticatedState(false);
+      setLoginMessage("");
+    }
   };
 
   applyTheme(getPreferredTheme(), themeToggleButton);
@@ -121,28 +153,61 @@ export const initAdminShell = ({ onAuthenticated } = {}) => {
     }
   });
 
-  setAuthenticatedState(isAuthenticated());
+  void checkSession();
 
   if (loginForm && passwordInput) {
     loginForm.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const enteredPasswordHash = await hashText(passwordInput.value);
-      const valid = enteredPasswordHash === ADMIN_PASSWORD_HASH;
+      const submitButton = loginForm.querySelector('button[type="submit"]');
+      submitButton?.setAttribute("disabled", "disabled");
+      setLoginMessage("Anmeldung wird geprueft ...");
 
-      if (valid) {
-        loginError?.classList.add("d-none");
+      try {
+        const formData = new FormData();
+        formData.set("action", "admin_login");
+        formData.set("username", String(usernameInput?.value || "admin").trim());
+        formData.set("password", passwordInput.value);
+
+        const response = await fetch(API_URL, {
+          method: "POST",
+          body: formData,
+          credentials: "same-origin",
+        });
+        const result = await parseApiResponse(response);
         passwordInput.value = "";
-        setAuthenticatedState(true);
-        return;
+        setAuthenticatedState(true, result.user || null);
+        setLoginMessage("");
+      } catch (error) {
+        setAuthenticatedState(false);
+        if (loginError) {
+          loginError.textContent = error.message || "Login fehlgeschlagen.";
+          loginError.classList.remove("d-none");
+        }
+        setLoginMessage("");
+        passwordInput.select();
+      } finally {
+        submitButton?.removeAttribute("disabled");
       }
-
-      setAuthenticatedState(false);
-      loginError?.classList.remove("d-none");
-      passwordInput.select();
     });
   }
 
+  adminLogoutButton?.addEventListener("click", async () => {
+    const formData = new FormData();
+    formData.set("action", "admin_logout");
+    try {
+      await fetch(API_URL, {
+        method: "POST",
+        body: formData,
+        credentials: "same-origin",
+      });
+    } finally {
+      setAuthenticatedState(false);
+      setLoginMessage("Du wurdest abgemeldet.", "success");
+    }
+  });
+
   return {
     setAuthenticatedState,
+    checkSession,
   };
 };

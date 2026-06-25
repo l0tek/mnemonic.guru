@@ -332,6 +332,7 @@ const uploadImageForEditor = async (file) => {
   const response = await fetch(API_URL, {
     method: "POST",
     body: formData,
+    credentials: "same-origin",
   });
   const result = await parseApiResponse(response);
   return resolveUploadedImageUrl(result?.img || "");
@@ -629,7 +630,7 @@ const loadEditablePage = async () => {
   try {
     const response = await fetch(
       `${API_URL}?page_content=1&page=${encodeURIComponent(page)}`,
-      { cache: "no-store" },
+      { cache: "no-store", credentials: "same-origin" },
     );
     const result = await parseApiResponse(response);
     projects = parseProjectsFromHtml(result.content || "");
@@ -734,6 +735,7 @@ if (editorForm && editorPageSelect && editorLoadButton) {
       const response = await fetch(API_URL, {
         method: "POST",
         body: formData,
+        credentials: "same-origin",
       });
       await parseApiResponse(response);
       renderProjectList();

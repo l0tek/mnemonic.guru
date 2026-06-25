@@ -70,7 +70,7 @@ const loadP5ProjectForEdit = async (project) => {
   try {
     const response = await fetch(
       `${API_URL}?p5js_project_code=1&project=${encodeURIComponent(project.slug)}`,
-      { cache: "no-store" },
+      { cache: "no-store", credentials: "same-origin" },
     );
     const result = await parseApiResponse(response);
     setP5EditMode(project);
@@ -108,7 +108,11 @@ const deleteP5Project = async (project) => {
     const formData = new FormData();
     formData.set("action", "delete_p5_project");
     formData.set("project", project.slug);
-    const response = await fetch(API_URL, { method: "POST", body: formData });
+    const response = await fetch(API_URL, {
+      method: "POST",
+      body: formData,
+      credentials: "same-origin",
+    });
     await parseApiResponse(response);
     if (editedP5Project === project.slug) {
       p5UploadForm?.reset();
@@ -166,6 +170,7 @@ const loadP5Projects = async () => {
   try {
     const response = await fetch(`${API_URL}?p5js_projects=1`, {
       cache: "no-store",
+      credentials: "same-origin",
     });
     const result = await parseApiResponse(response);
     const projects = Array.isArray(result.projects) ? result.projects : [];
@@ -215,6 +220,7 @@ if (uploadForm && uploadStatus && uploadImageInput) {
       const response = await fetch(API_URL, {
         method: "POST",
         body: formData,
+        credentials: "same-origin",
       });
       await parseApiResponse(response);
       updateStatus(uploadStatus, "Upload erfolgreich gespeichert.", "success");
@@ -284,6 +290,7 @@ if (p5UploadForm && p5UploadStatus && p5UploadFileInput && p5ProjectNameInput) {
       const response = await fetch(API_URL, {
         method: "POST",
         body: formData,
+        credentials: "same-origin",
       });
       const result = await parseApiResponse(response);
       const wasEditing = Boolean(editedP5Project);
