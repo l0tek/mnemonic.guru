@@ -489,6 +489,14 @@ function getSqliteConnection(string $sqliteDir, string $sqlitePath): PDO
     );
 
     $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS preview_selections (
+            preview_key TEXT PRIMARY KEY,
+            preview_value TEXT NOT NULL,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )"
+    );
+
+    $pdo->exec(
         "CREATE TABLE IF NOT EXISTS admin_users (
             username TEXT PRIMARY KEY,
             password_hash TEXT NOT NULL,
@@ -746,6 +754,60 @@ function savePageContentToStore(PDO $pdo, string $pageKey, string $content): voi
     ]);
 }
 
+function getAllowedPreviewKeys(): array
+{
+    return [
+        "gallery_fractals",
+        "gallery_digital",
+        "gallery_fotos",
+        "home_project",
+        "lab_raspi_article",
+        "lab_code_p5",
+    ];
+}
+
+function readPreviewSelections(PDO $pdo): array
+{
+    $allowedKeys = getAllowedPreviewKeys();
+    $selections = array_fill_keys($allowedKeys, "");
+    $statement = $pdo->query("SELECT preview_key, preview_value FROM preview_selections");
+    if (!$statement) {
+        return $selections;
+    }
+
+    while ($row = $statement->fetch()) {
+        $key = (string)($row["preview_key"] ?? "");
+        if (!in_array($key, $allowedKeys, true)) {
+            continue;
+        }
+        $selections[$key] = (string)($row["preview_value"] ?? "");
+    }
+    return $selections;
+}
+
+function savePreviewSelections(PDO $pdo, array $selections): void
+{
+    $allowedKeys = getAllowedPreviewKeys();
+    $statement = $pdo->prepare(
+        "INSERT INTO preview_selections (preview_key, preview_value, updated_at)
+         VALUES (:preview_key, :preview_value, CURRENT_TIMESTAMP)
+         ON CONFLICT(preview_key) DO UPDATE SET
+             preview_value = excluded.preview_value,
+             updated_at = CURRENT_TIMESTAMP"
+    );
+
+    foreach ($allowedKeys as $key) {
+        $value = trim((string)($selections[$key] ?? ""));
+        if (strlen($value) > 255) {
+            $value = substr($value, 0, 255);
+        }
+        $statement->execute([
+            ":preview_key" => $key,
+            ":preview_value" => $value,
+        ]);
+    }
+}
+
 function sanitizeUploadBaseName(string $originalName): string
 {
     $base = pathinfo($originalName, PATHINFO_FILENAME);
@@ -879,6 +941,25 @@ if (isset($_GET["admin_session"])) {
             "username" => (string)$session["username"],
         ],
         "expires_at" => (int)$session["expires_at"],
+    ]);
+}
+
+if (isset($_GET["preview_config"])) {
+    header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+    if (!extension_loaded("pdo_sqlite")) {
+        jsonResponse(["status" => "ERR", "msg" => "sqlite nicht verfuegbar"], 500);
+    }
+
+    try {
+        $pdo = getSqliteConnection($sqliteDir, $sqlitePath);
+        $selections = readPreviewSelections($pdo);
+    } catch (Throwable $exception) {
+        jsonResponse(["status" => "ERR", "msg" => "voransicht konnte nicht geladen werden"], 500);
+    }
+
+    jsonResponse([
+        "status" => "OK",
+        "selections" => $selections,
     ]);
 }
 
@@ -1090,6 +1171,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         requireAdminSession($authPdo);
     } catch (Throwable $exception) {
         jsonResponse(["status" => "ERR", "msg" => "authentifizierung fehlgeschlagen"], 401);
+    }
+
+    if ($action === "save_preview_config") {
+        $rawSelections = (string)($_POST["selections"] ?? "{}");
+        $decodedSelections = json_decode($rawSelections, true);
+        if (!is_array($decodedSelections)) {
+            jsonResponse(["status" => "ERR", "msg" => "ungueltige voransicht"], 400);
+        }
+
+        try {
+            savePreviewSelections($authPdo, $decodedSelections);
+            $selections = readPreviewSelections($authPdo);
+        } catch (Throwable $exception) {
+            jsonResponse(["status" => "ERR", "msg" => "voransicht konnte nicht gespeichert werden"], 500);
+        }
+
+        jsonResponse([
+            "status" => "OK",
+            "selections" => $selections,
+        ]);
     }
 
     if ($action === "update_p5_project") {

@@ -3,8 +3,9 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./nav-dropdowns.js";
 
 const STORAGE_KEY = "theme-preference";
-const API_URL = "https://www.mnemonic.guru/api/index.php";
+const API_URL = new URL("/api/index.php", window.location.origin).toString();
 const API_ORIGIN = new URL(API_URL).origin;
+const CANONICAL_HOST = "mnemonic.guru";
 const IMAGE_PATTERN = /\.(jpg|jpeg|png|gif|webp)$/i;
 const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
 const themeToggleButton = document.getElementById("theme-toggle");
@@ -39,6 +40,34 @@ const categories = [
     thumbBase: "https://mnemonic.guru/img/fotos/tn/",
   },
 ];
+
+let previewSelectionsRequest = null;
+
+const fetchPreviewSelections = async () => {
+  if (!previewSelectionsRequest) {
+    previewSelectionsRequest = fetch(
+      `${API_URL}?preview_config=1&_=${Date.now()}`,
+      {
+      cache: "no-store",
+      },
+    )
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const payload = await response.json();
+        if (String(payload?.status || "").toUpperCase() !== "OK") {
+          throw new Error(payload?.msg || "Unerwartete API-Antwort");
+        }
+        return payload?.selections || {};
+      })
+      .catch((error) => {
+        console.warn("Preview-Auswahl nicht verfuegbar:", error);
+        return {};
+      });
+  }
+  return previewSelectionsRequest;
+};
 
 const getPreferredTheme = () => {
   const storedTheme = localStorage.getItem(STORAGE_KEY);
@@ -163,7 +192,7 @@ const renderHub = async () => {
   }
 };
 
-const parseRaspiFirstImageFromContent = (content) => {
+const parseRaspiFirstImageFromContent = (content, selectedArticleId = "") => {
   const html = String(content || "").trim();
   if (!html) {
     return "";
@@ -178,9 +207,39 @@ const parseRaspiFirstImageFromContent = (content) => {
   if (!cards.length) {
     return "";
   }
+  const normalizeOwnAssetUrl = (value) => {
+    const raw = String(value || "").trim();
+    if (!raw) {
+      return "";
+    }
+    try {
+      const url = new URL(raw, API_ORIGIN);
+      if (url.hostname === `www.${CANONICAL_HOST}`) {
+        url.hostname = CANONICAL_HOST;
+      }
+      return url.toString();
+    } catch {
+      return raw;
+    }
+  };
+  const getCardImage = (card) =>
+    normalizeOwnAssetUrl(
+      card.querySelector(".project-section-body img")?.getAttribute("src") || "",
+    );
+  if (selectedArticleId) {
+    const selectedIndex = Number(
+      String(selectedArticleId).replace(/^raspi-article-/, ""),
+    );
+    const selectedCard = Number.isFinite(selectedIndex)
+      ? cards[selectedIndex - 1]
+      : null;
+    const selectedImage = selectedCard ? getCardImage(selectedCard) : "";
+    if (selectedImage) {
+      return selectedImage;
+    }
+  }
   for (let i = cards.length - 1; i >= 0; i -= 1) {
-    const image =
-      cards[i].querySelector(".project-section-body img")?.src || "";
+    const image = getCardImage(cards[i]);
     if (image) {
       return image;
     }
@@ -208,7 +267,12 @@ const renderRaspiPreviewIntoLabCard = async () => {
       throw new Error(payload?.msg || "Unerwartete API-Antwort");
     }
 
-    const imageUrl = parseRaspiFirstImageFromContent(payload?.content || "");
+    const previewSelections = await fetchPreviewSelections();
+    const selectedArticleId = String(previewSelections.lab_raspi_article || "");
+    const imageUrl = parseRaspiFirstImageFromContent(
+      payload?.content || "",
+      selectedArticleId,
+    );
     if (!imageUrl) {
       return;
     }
@@ -248,7 +312,10 @@ const renderCodePreviewIntoLabCard = async () => {
     }
 
     const projects = Array.isArray(payload.projects) ? payload.projects : [];
-    const project = projects[0];
+    const previewSelections = await fetchPreviewSelections();
+    const selectedSlug = String(previewSelections.lab_code_p5 || "");
+    const project =
+      projects.find((entry) => entry.slug === selectedSlug) || projects[0];
     if (!project?.entry_url) {
       return;
     }

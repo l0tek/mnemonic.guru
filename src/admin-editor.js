@@ -39,6 +39,7 @@ const apiOrigin = (() => {
     return window.location.origin;
   }
 })();
+const CANONICAL_HOST = "mnemonic.guru";
 
 const getCurrentEntryLabel = () => {
   return String(editorPageSelect?.value || "").toLowerCase() === "howto"
@@ -312,7 +313,11 @@ const resolveUploadedImageUrl = (path) => {
     return value;
   }
   try {
-    return new URL(value, apiOrigin).toString();
+    const url = new URL(value, apiOrigin);
+    if (url.hostname === `www.${CANONICAL_HOST}`) {
+      url.hostname = CANONICAL_HOST;
+    }
+    return url.toString();
   } catch {
     return value;
   }

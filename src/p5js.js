@@ -4,7 +4,7 @@ import "./nav-dropdowns.js";
 import { js as beautifyJs } from "js-beautify";
 
 const STORAGE_KEY = "theme-preference";
-const API_URL = "https://www.mnemonic.guru/api/index.php";
+const API_URL = "https://mnemonic.guru/api/index.php";
 const API_ORIGIN = new URL(API_URL).origin;
 const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
 const themeToggleButton = document.getElementById("theme-toggle");

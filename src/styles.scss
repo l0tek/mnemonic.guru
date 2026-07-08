@@ -789,7 +789,8 @@ body.is-loading > :not(#page-loader) {
 }
 
 .admin-upload-form .form-control,
-.admin-upload-form .form-select {
+.admin-upload-form .form-select,
+.admin-preview-form .form-select {
     min-height: 2.75rem;
 }
 

@@ -3,7 +3,7 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./nav-dropdowns.js";
 
 const STORAGE_KEY = "theme-preference";
-const API_URL = "https://www.mnemonic.guru/api/index.php";
+const API_URL = "https://mnemonic.guru/api/index.php";
 const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
 const themeToggleButton = document.getElementById("theme-toggle");
 const whoisForm = document.getElementById("whois-form");

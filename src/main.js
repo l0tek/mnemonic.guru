@@ -388,9 +388,10 @@ const latestWorksGrid = document.getElementById("latest-works-grid");
 const latestNewsGrid = document.getElementById("latest-news-grid");
 const latestProjectsGrid = document.getElementById("latest-projects-grid");
 const pageEditableContent = document.getElementById("page-editable-content");
-const API_URL = "https://www.mnemonic.guru/api/index.php";
+const API_URL = new URL("/api/index.php", window.location.origin).toString();
 const API_ORIGIN = new URL(API_URL).origin;
 const IMAGE_PATTERN = /\.(jpg|jpeg|png|gif|webp)$/i;
+const CANONICAL_HOST = "mnemonic.guru";
 const projectPages = [
   { key: "raspi", label: "Raspi", pageUrl: "/raspi.html" },
   { key: "esp32", label: "esp32", pageUrl: "/esp32.html" },
@@ -398,18 +399,21 @@ const projectPages = [
 ];
 const teaserCategories = [
   {
+    key: "gallery_fractals",
     label: "Fractals",
     requestUrl: `${API_URL}?latest=1`,
     imageBase: "https://mnemonic.guru/img/fractals/",
     pageUrl: "/fraktale.html",
   },
   {
+    key: "gallery_digital",
     label: "Digital",
     requestUrl: `${API_URL}?digital=1&latest=1`,
     imageBase: "https://mnemonic.guru/img/digital/",
     pageUrl: "/digitalart.html",
   },
   {
+    key: "gallery_fotos",
     label: "Fotos",
     requestUrl: `${API_URL}?fotos=1&latest=1`,
     imageBase: "https://mnemonic.guru/img/fotos/",
@@ -421,16 +425,47 @@ const newsTeaserFeeds = [
   {
     label: "Security",
     requestUrl: `${API_URL}?rss=security&limit=1`,
+    fallbackUrl: "https://www.heise.de/security/feed.xml",
   },
   {
     label: "heise online",
     requestUrl: `${API_URL}?rss=heiseonline&limit=1`,
+    fallbackUrl: "https://www.heise.de/rss/heise-atom.xml",
   },
   {
     label: "Telepolis",
     requestUrl: `${API_URL}?rss=telepolis&limit=1`,
+    fallbackUrl: "https://www.telepolis.de/news-atom.xml",
   },
 ];
+
+let previewSelectionsRequest = null;
+
+const fetchPreviewSelections = async () => {
+  if (!previewSelectionsRequest) {
+    previewSelectionsRequest = fetch(
+      `${API_URL}?preview_config=1&_=${Date.now()}`,
+      {
+      cache: "no-store",
+      },
+    )
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const payload = await response.json();
+        if (String(payload?.status || "").toUpperCase() !== "OK") {
+          throw new Error(payload?.msg || "Unerwartete API-Antwort");
+        }
+        return payload?.selections || {};
+      })
+      .catch((error) => {
+        console.warn("Preview-Auswahl nicht verfuegbar:", error);
+        return {};
+      });
+  }
+  return previewSelectionsRequest;
+};
 
 const toDateTimeLabel = (value) => {
   if (!value) {
@@ -496,6 +531,7 @@ const loadLatestWorks = async () => {
     return;
   }
   latestWorksGrid.innerHTML = "";
+  const previewSelections = await fetchPreviewSelections();
   for (let i = 0; i < teaserCategories.length; i += 1) {
     const category = teaserCategories[i];
     try {
@@ -505,7 +541,11 @@ const loadLatestWorks = async () => {
         renderLatestCard(category, "");
         continue;
       }
-      const fileName = json.find((entry) => IMAGE_PATTERN.test(entry)) || "";
+      const selectedFileName = String(previewSelections[category.key] || "");
+      const fileName =
+        json.find((entry) => entry === selectedFileName && IMAGE_PATTERN.test(entry)) ||
+        json.find((entry) => IMAGE_PATTERN.test(entry)) ||
+        "";
       renderLatestCard(category, fileName);
     } catch (error) {
       console.error(`Latest works failed (${category.label}):`, error);
@@ -557,6 +597,75 @@ const renderLatestNewsCard = (feed, item) => {
   latestNewsGrid.appendChild(card);
 };
 
+const parseLatestNewsItem = (xmlText) => {
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(xmlText, "application/xml");
+  const item =
+    xml.querySelector("channel > item") || xml.querySelector("feed > entry");
+
+  if (!item || xml.querySelector("parsererror")) {
+    return null;
+  }
+
+  const title = item.querySelector("title")?.textContent?.trim() || "";
+  const linkNode = item.querySelector("link");
+  const rawDescription =
+    item.querySelector("description")?.textContent?.trim() ||
+    item.querySelector("summary")?.textContent?.trim() ||
+    item.querySelector("content")?.textContent?.trim() ||
+    "";
+  const imageFromNode =
+    item.querySelector("content img")?.getAttribute("src") ||
+    item.querySelector("description img")?.getAttribute("src") ||
+    "";
+  const imageFromTextMatch = rawDescription.match(
+    /<img[^>]+src=["']([^"']+)["']/i,
+  );
+
+  return {
+    title,
+    link: linkNode?.getAttribute("href") || linkNode?.textContent?.trim() || "",
+    pubDate:
+      item.querySelector("pubDate")?.textContent?.trim() ||
+      item.querySelector("updated")?.textContent?.trim() ||
+      item.querySelector("published")?.textContent?.trim() ||
+      "",
+    image: imageFromNode || (imageFromTextMatch ? imageFromTextMatch[1] : ""),
+  };
+};
+
+const loadLatestNewsItem = async (feed) => {
+  try {
+    const response = await fetch(feed.requestUrl, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const payload = await response.json();
+    const firstItem = Array.isArray(payload.items) ? payload.items[0] : null;
+    if (!firstItem) {
+      throw new Error("Keine Feed-Eintraege");
+    }
+    return firstItem;
+  } catch (apiError) {
+    if (!feed.fallbackUrl) {
+      throw apiError;
+    }
+
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(
+      feed.fallbackUrl,
+    )}`;
+    const response = await fetch(proxyUrl, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`Fallback HTTP ${response.status}`);
+    }
+    const item = parseLatestNewsItem(await response.text());
+    if (!item) {
+      throw new Error("Fallback lieferte keine Feed-Eintraege");
+    }
+    return item;
+  }
+};
+
 const loadLatestNews = async () => {
   if (!latestNewsGrid) {
     return;
@@ -566,18 +675,9 @@ const loadLatestNews = async () => {
   for (let i = 0; i < newsTeaserFeeds.length; i += 1) {
     const feed = newsTeaserFeeds[i];
     try {
-      const response = await fetch(feed.requestUrl, { cache: "no-store" });
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      const payload = await response.json();
-      const firstItem = Array.isArray(payload.items) ? payload.items[0] : null;
-      if (!firstItem) {
-        throw new Error("Keine Feed-Eintraege");
-      }
-      renderLatestNewsCard(feed, firstItem);
+      renderLatestNewsCard(feed, await loadLatestNewsItem(feed));
     } catch (error) {
-      console.error(`Latest news failed (${feed.label}):`, error);
+      console.warn(`Latest news unavailable (${feed.label}):`, error);
       renderLatestNewsCard(feed, {
         title: "Keine News verfuegbar",
         pubDate: "",
@@ -635,15 +735,55 @@ const parseProjectCardsFromContent = (content, pageKey) => {
     return [];
   }
 
+  const normalizeOwnAssetUrl = (value) => {
+    const raw = String(value || "").trim();
+    if (!raw) {
+      return "";
+    }
+    try {
+      const url = new URL(raw, API_ORIGIN);
+      if (url.hostname === `www.${CANONICAL_HOST}`) {
+        url.hostname = CANONICAL_HOST;
+      }
+      return url.toString();
+    } catch {
+      return raw;
+    }
+  };
+
+  const normalizeBodyImageUrls = (bodyHtml) => {
+    const raw = String(bodyHtml || "");
+    if (!raw) {
+      return "";
+    }
+    const bodyDoc = parser.parseFromString(`<div id="root">${raw}</div>`, "text/html");
+    const root = bodyDoc.getElementById("root");
+    if (!root) {
+      return raw;
+    }
+    root.querySelectorAll("img[src]").forEach((image) => {
+      const normalized = normalizeOwnAssetUrl(image.getAttribute("src"));
+      if (normalized) {
+        image.setAttribute("src", normalized);
+      }
+    });
+    return root.innerHTML;
+  };
+
   return cards.map((card, index) => {
     const title =
       card.querySelector(".project-section-title")?.textContent?.trim() ||
       `Artikel ${index + 1}`;
     const summary =
       card.querySelector(".project-section-summary")?.textContent?.trim() || "";
-    const bodyHtml =
-      card.querySelector(".project-section-body")?.innerHTML || "";
-    const imageUrl = card.querySelector(".project-section-body img")?.src || "";
+    const bodyHtml = normalizeBodyImageUrls(
+      card.querySelector(".project-section-body")?.innerHTML || "",
+    );
+    const imageUrl = normalizeOwnAssetUrl(
+      card
+        .querySelector(".project-section-body img")
+        ?.getAttribute("src") || "",
+    );
     const originalIndex = index + 1;
     return {
       id: `${pageKey}-article-${originalIndex}`,
@@ -1760,9 +1900,10 @@ const renderLatestProjectOverviewCard = (project) => {
   latestProjectsGrid.appendChild(card);
 };
 
-const fetchLatestP5ProjectOverview = async () => {
+const fetchP5ProjectOverview = async (selectedSlug = "") => {
   const projects = await fetchP5Projects();
-  const latestProject = projects[0];
+  const latestProject =
+    projects.find((entry) => entry.slug === selectedSlug) || projects[0];
   if (!latestProject) {
     return null;
   }
@@ -1800,11 +1941,34 @@ const fetchLatestP5ProjectOverview = async () => {
   };
 };
 
+const fetchLatestP5ProjectOverview = async () => fetchP5ProjectOverview("");
+
+const getPreviewProjectKeys = (previewSelections) => {
+  const keys = [];
+  const addKey = (value) => {
+    const key = String(value || "").trim();
+    if (key && !keys.includes(key)) {
+      keys.push(key);
+    }
+  };
+
+  addKey(previewSelections.home_project);
+  if (previewSelections.lab_raspi_article) {
+    addKey(`raspi:${previewSelections.lab_raspi_article}`);
+  }
+  if (previewSelections.lab_code_p5) {
+    addKey(`p5js:${previewSelections.lab_code_p5}`);
+  }
+  return keys;
+};
+
 const loadLatestProjectsOverview = async () => {
   if (!latestProjectsGrid) {
     return;
   }
   latestProjectsGrid.innerHTML = "";
+  const previewSelections = await fetchPreviewSelections();
+  const selectedProjectKeys = getPreviewProjectKeys(previewSelections);
 
   const allProjects = [];
   for (let i = 0; i < projectPages.length; i += 1) {
@@ -1829,7 +1993,13 @@ const loadLatestProjectsOverview = async () => {
   }
 
   try {
-    const p5Project = await fetchLatestP5ProjectOverview();
+    const selectedP5Key = selectedProjectKeys.find((key) =>
+      key.startsWith("p5js:"),
+    );
+    const selectedP5Slug = selectedP5Key
+      ? selectedP5Key.replace(/^p5js:/, "")
+      : "";
+    const p5Project = await fetchP5ProjectOverview(selectedP5Slug);
     if (p5Project) {
       allProjects.push(p5Project);
     }
@@ -1837,13 +2007,31 @@ const loadLatestProjectsOverview = async () => {
     console.error("Latest p5.js project failed:", error);
   }
 
-  allProjects
-    .sort((a, b) => {
+  const sortedProjects = allProjects.sort((a, b) => {
       if (a.pageUpdatedAt !== b.pageUpdatedAt) {
         return b.pageUpdatedAt - a.pageUpdatedAt;
       }
       return a.withinPageRank - b.withinPageRank;
-    })
+    });
+  const getProjectSelectionKey = (entry) => {
+    if (entry.pageKey === "p5js") {
+      return `p5js:${entry.slug}`;
+    }
+    return `${entry.pageKey}:${entry.id}`;
+  };
+  const selectedProjects = selectedProjectKeys
+    .map((key) =>
+      sortedProjects.find((entry) => getProjectSelectionKey(entry) === key),
+    )
+    .filter(Boolean);
+  const visibleProjects = selectedProjects.length
+    ? [
+        ...selectedProjects,
+        ...sortedProjects.filter((entry) => !selectedProjects.includes(entry)),
+      ]
+    : sortedProjects;
+
+  visibleProjects
     .slice(0, 6)
     .forEach((entry) => {
       renderLatestProjectOverviewCard(entry);

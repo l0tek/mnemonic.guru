@@ -5,6 +5,14 @@ export default defineConfig({
   server: { port: 5173 },
   build: {
     rollupOptions: {
+      output: {
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name?.endsWith(".css")) {
+            return "assets/[name][extname]";
+          }
+          return "assets/[name]-[hash][extname]";
+        },
+      },
       input: {
         main: resolve(__dirname, "index.html"),
         gallery: resolve(__dirname, "gallery.html"),
@@ -26,6 +34,7 @@ export default defineConfig({
         adminDashboard: resolve(__dirname, "4meo/index.html"),
         adminUpload: resolve(__dirname, "4meo/upload.html"),
         adminEditor: resolve(__dirname, "4meo/editor.html"),
+        adminPreview: resolve(__dirname, "4meo/preview.html"),
       },
     },
   },
