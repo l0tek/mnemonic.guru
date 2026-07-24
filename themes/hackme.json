@@ -1,0 +1,10 @@
+{
+  "name": "HackMe",
+  "background": "#131c2b",
+  "surface": "#1d293d",
+  "surface_alt": "#111927",
+  "text": "#f5f5f6",
+  "muted": "#cbd2de",
+  "accent": "#9fef00",
+  "accent_secondary": "#ff5364"
+}

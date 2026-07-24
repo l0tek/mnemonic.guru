@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="de" data-bs-theme="light">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>mnemonic.guru - Themen Manager</title>
+        <link rel="stylesheet" href="/assets/bootstrap.bundle.css" />
+    </head>
+    <body class="admin-page">
+        <nav class="admin-navbar admin-navbar--top navbar navbar-expand-lg" aria-label="Admin Navigation">
+            <div class="container admin-navbar-inner">
+                <a class="navbar-brand admin-navbar-brand" href="/4meo/index.html">
+                    <span class="admin-navbar-kicker">mnemonic.guru</span>
+                    <span class="admin-navbar-title">Admin</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#admin-navbar-nav" aria-controls="admin-navbar-nav" aria-expanded="false" aria-label="Admin Navigation umschalten">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="admin-navbar-nav">
+                    <ul class="navbar-nav gap-lg-2 me-lg-auto mb-3 mb-lg-0">
+                        <li class="nav-item"><a class="nav-link" href="/4meo/index.html">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/4meo/upload.html">Uploads</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/4meo/editor.html">Editor</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/4meo/preview.html">Voransicht</a></li>
+                        <li class="nav-item"><a class="nav-link active" aria-current="page" href="/4meo/theme.html">Themen</a></li>
+                    </ul>
+                    <div class="admin-navbar-meta">
+                        <strong id="admin-user-label"></strong>
+                        <span>Themen Manager</span>
+                    </div>
+                    <button id="admin-logout" class="btn btn-outline-danger admin-logout d-none" type="button">Abmelden</button>
+                    <button id="theme-toggle" class="btn btn-outline-secondary theme-toggle admin-navbar-theme" type="button" aria-label="Zu Darkmode wechseln">
+                        <span class="theme-icon" aria-hidden="true">&#127769;</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="container-fluid py-5 px-3 px-lg-4">
+            <section class="admin-shell admin-shell--wide mx-auto">
+                <form id="admin-login-form" class="admin-login-form admin-login-panel">
+                    <div class="mb-4">
+                        <p class="text-uppercase text-body-secondary fw-semibold mb-1">Secure Login</p>
+                        <h1 class="h3 mb-2">Admin Anmeldung</h1>
+                        <p class="text-body-secondary mb-0">Melde dich an, um das Website-Theme zu verwalten.</p>
+                    </div>
+                    <label class="form-label" for="admin-username">Benutzer</label>
+                    <input id="admin-username" class="form-control" type="text" autocomplete="username" value="admin" required />
+                    <label class="form-label mt-3" for="admin-password">Passwort</label>
+                    <input id="admin-password" class="form-control" type="password" autocomplete="current-password" required />
+                    <button class="btn btn-primary w-100 mt-3" type="submit">Anmelden</button>
+                    <p id="admin-login-status" class="small text-body-secondary mt-3 mb-0 d-none"></p>
+                    <p id="admin-login-error" class="text-danger small mt-2 mb-0 d-none">Login fehlgeschlagen.</p>
+                </form>
+
+                <section id="admin-content" class="d-none" aria-live="polite">
+                    <div class="admin-section-heading mb-4">
+                        <p class="text-uppercase text-body-secondary fw-semibold mb-1">Design System</p>
+                        <h1 class="h3 mb-2">Themen Manager</h1>
+                        <p class="text-body-secondary mb-0">Farben bearbeiten, live prüfen und als globales Website-Theme aktivieren.</p>
+                    </div>
+
+                    <div class="admin-theme-layout">
+                        <form id="admin-theme-form" class="admin-panel admin-theme-form">
+                            <div class="admin-theme-library mb-4">
+                                <label class="form-label fw-semibold" for="admin-theme-select">Gespeicherte Themes</label>
+                                <div class="d-flex gap-2">
+                                    <select id="admin-theme-select" class="form-select" aria-label="Gespeichertes Theme auswählen"></select>
+                                    <button id="admin-theme-activate" class="btn btn-success flex-shrink-0" type="button">Aktivieren</button>
+                                    <button id="admin-theme-new" class="btn btn-outline-primary flex-shrink-0" type="button">Neu</button>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+                                <div>
+                                    <p class="text-uppercase small text-body-secondary fw-semibold mb-1">Bildvorlage</p>
+                                    <h2 class="h5 fw-bold mb-0">Still Relevant</h2>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input id="theme-active" class="form-check-input" type="checkbox" name="active" role="switch" />
+                                    <label class="form-check-label" for="theme-active">Aktiv</label>
+                                </div>
+                            </div>
+
+                            <label class="form-label" for="theme-name">Theme-Name</label>
+                            <input id="theme-name" class="form-control mb-3" name="name" maxlength="80" required />
+
+                            <div class="admin-theme-color-grid">
+                                <label>Hintergrund <input class="form-control form-control-color" type="color" name="background" /></label>
+                                <label>Karten <input class="form-control form-control-color" type="color" name="surface" /></label>
+                                <label>Vertiefung <input class="form-control form-control-color" type="color" name="surface_alt" /></label>
+                                <label>Text <input class="form-control form-control-color" type="color" name="text" /></label>
+                                <label>Sekundärtext <input class="form-control form-control-color" type="color" name="muted" /></label>
+                                <label>Akzent Lime <input class="form-control form-control-color" type="color" name="accent" /></label>
+                                <label>Akzent Rot <input class="form-control form-control-color" type="color" name="accent_secondary" /></label>
+                            </div>
+
+                            <section class="admin-theme-design mt-4" aria-labelledby="theme-design-heading">
+                                <h3 id="theme-design-heading" class="h6 fw-bold mb-3">Layout &amp; Typografie</h3>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label" for="theme-scope">Theme-Umfang</label>
+                                        <select id="theme-scope" class="form-select" name="scope">
+                                            <option value="colors">Nur Farben – Original-Layout behalten</option>
+                                            <option value="full">Vollständiges Design – Layoutregler anwenden</option>
+                                            <option value="original" disabled>Original-Design</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label" for="theme-font-family">Schriftstil</label>
+                                        <select id="theme-font-family" class="form-select" name="font_family">
+                                            <option value="rounded">Weich &amp; rund</option>
+                                            <option value="system">System Sans</option>
+                                            <option value="mono">Technisch Mono</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label d-flex justify-content-between" for="theme-heading-weight">Überschriftstärke <output data-theme-output="heading_weight"></output></label>
+                                        <input id="theme-heading-weight" class="form-range" type="range" name="heading_weight" min="500" max="900" step="50" />
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label" for="theme-content-width">Inhaltsbreite (px)</label>
+                                        <input id="theme-content-width" class="form-control" type="number" name="content_width" min="680" max="1400" step="10" />
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label" for="theme-hero-width">Hero-Breite (px)</label>
+                                        <input id="theme-hero-width" class="form-control" type="number" name="hero_width" min="480" max="1100" step="10" />
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label d-flex justify-content-between" for="theme-panel-padding">Panel-Innenabstand <output data-theme-output="panel_padding"></output></label>
+                                        <input id="theme-panel-padding" class="form-range" type="range" name="panel_padding" min="16" max="80" step="2" />
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label d-flex justify-content-between" for="theme-section-gap">Abschnittsabstand <output data-theme-output="section_gap"></output></label>
+                                        <input id="theme-section-gap" class="form-range" type="range" name="section_gap" min="0" max="64" step="2" />
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                        <label class="form-label d-flex justify-content-between" for="theme-card-radius">Kartenradius <output data-theme-output="card_radius"></output></label>
+                                        <input id="theme-card-radius" class="form-range" type="range" name="card_radius" min="0" max="40" />
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                        <label class="form-label d-flex justify-content-between" for="theme-button-radius">Buttonradius <output data-theme-output="button_radius"></output></label>
+                                        <input id="theme-button-radius" class="form-range" type="range" name="button_radius" min="0" max="32" />
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                        <label class="form-label d-flex justify-content-between" for="theme-shadow-strength">Schatten <output data-theme-output="shadow_strength"></output></label>
+                                        <input id="theme-shadow-strength" class="form-range" type="range" name="shadow_strength" min="0" max="40" />
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label d-flex justify-content-between" for="theme-header-opacity">Header-Hintergrund Transparenz <output data-theme-output="header_opacity"></output></label>
+                                        <input id="theme-header-opacity" class="form-range" type="range" name="header_opacity" min="0" max="100" />
+                                        <div class="form-text">0 % ist vollständig transparent, 100 % vollständig deckend.</div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label d-flex justify-content-between" for="theme-hero-opacity">Hero-Hintergrund Transparenz <output data-theme-output="hero_opacity"></output></label>
+                                        <input id="theme-hero-opacity" class="form-range" type="range" name="hero_opacity" min="0" max="100" />
+                                        <div class="form-text">Beeinflusst nur den Hero-Hintergrund, nicht Text oder Animationen.</div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label" for="theme-nav-style">Navigation</label>
+                                        <select id="theme-nav-style" class="form-select" name="nav_style">
+                                            <option value="minimal">Minimal</option>
+                                            <option value="pill">Pill-Navigation</option>
+                                            <option value="bar">Leiste</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label" for="theme-hero-style">Hero</label>
+                                        <select id="theme-hero-style" class="form-select" name="hero_style">
+                                            <option value="editorial">Editorial wie Vorlage</option>
+                                            <option value="compact">Kompakt</option>
+                                            <option value="immersive">Großflächig</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label" for="theme-card-style">Karten</label>
+                                        <select id="theme-card-style" class="form-select" name="card_style">
+                                            <option value="solid">Massive Flächen</option>
+                                            <option value="outlined">Konturiert</option>
+                                            <option value="elevated">Schwebend</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label" for="theme-effects">Effekte</label>
+                                        <select id="theme-effects" class="form-select" name="effects">
+                                            <option value="none">Keine</option>
+                                            <option value="subtle">Dezent</option>
+                                            <option value="glow">Glow</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="admin-theme-json mt-4" aria-labelledby="theme-json-heading">
+                                <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-2">
+                                    <div>
+                                        <h3 id="theme-json-heading" class="h6 fw-bold mb-1">Theme JSON</h3>
+                                        <p class="small text-body-secondary mb-0">Direkt bearbeiten, als Datei laden oder exportieren.</p>
+                                    </div>
+                                    <label class="btn btn-sm btn-outline-secondary mb-0">
+                                        JSON-Datei laden
+                                        <input id="admin-theme-json-file" class="visually-hidden" type="file" accept=".json,application/json" />
+                                    </label>
+                                </div>
+                                <textarea id="admin-theme-json" class="form-control admin-theme-json-editor font-monospace" rows="13" spellcheck="false" aria-label="Theme als JSON bearbeiten"></textarea>
+                                <div class="d-flex flex-wrap gap-2 mt-2">
+                                    <button id="admin-theme-json-apply" class="btn btn-sm btn-outline-primary" type="button">JSON übernehmen</button>
+                                    <button id="admin-theme-json-download" class="btn btn-sm btn-outline-secondary" type="button">JSON herunterladen</button>
+                                    <button id="admin-theme-json-copy" class="btn btn-sm btn-outline-secondary" type="button">JSON kopieren</button>
+                                </div>
+                            </section>
+
+                            <div class="d-flex flex-wrap gap-2 mt-4">
+                                <button class="btn btn-primary" type="submit">Theme speichern</button>
+                                <button id="admin-theme-reset" class="btn btn-outline-secondary" type="button">Bildvorlage laden</button>
+                            </div>
+                            <p id="admin-theme-status" class="small text-body-secondary mt-3 mb-1"></p>
+                            <p id="admin-theme-updated" class="small text-body-secondary mb-0"></p>
+                        </form>
+
+                        <section id="admin-theme-preview" class="admin-theme-preview" aria-label="Theme Vorschau">
+                            <div class="admin-theme-preview-logo">
+                                <span aria-hidden="true">&#9729;</span>
+                                <strong>Try<br />Hack<br />Me</strong>
+                            </div>
+                            <article class="admin-theme-preview-card">
+                                <div class="admin-theme-preview-hero">
+                                    <div>
+                                        <strong>Overqualified.</strong>
+                                        <strong class="accent">Still relevant.</strong>
+                                    </div>
+                                    <div class="admin-theme-preview-screen" aria-hidden="true">WEB<span>1</span></div>
+                                </div>
+                                <div class="admin-theme-preview-copy">
+                                    <h2>You've gone further than this. Here's why it still counts.</h2>
+                                    <p>Ein konzentriertes Dark Theme mit klarer Hierarchie, ruhigen Flächen und einem selbstbewussten Lime-Akzent.</p>
+                                    <hr />
+                                    <strong class="eyebrow">WHAT YOU'LL ACTUALLY BE DOING</strong>
+                                    <p>Live-Vorschau der Farben für Karten, Texte, Akzente und Hintergründe.</p>
+                                </div>
+                            </article>
+                        </section>
+                    </div>
+                </section>
+            </section>
+        </main>
+        <script type="module" src="/src/admin-theme.js"></script>
+    </body>
+</html>

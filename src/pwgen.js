@@ -1,4 +1,5 @@
 import "./styles.scss";
+import "./theme-runtime.js";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./nav-dropdowns.js";
 

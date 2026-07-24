@@ -497,6 +497,24 @@ function getSqliteConnection(string $sqliteDir, string $sqlitePath): PDO
     );
 
     $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS site_theme (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            theme_json TEXT NOT NULL,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )"
+    );
+
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS site_themes (
+            slug TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            theme_json TEXT NOT NULL,
+            is_active INTEGER NOT NULL DEFAULT 0,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )"
+    );
+
+    $pdo->exec(
         "CREATE TABLE IF NOT EXISTS admin_users (
             username TEXT PRIMARY KEY,
             password_hash TEXT NOT NULL,
@@ -808,6 +826,234 @@ function savePreviewSelections(PDO $pdo, array $selections): void
     }
 }
 
+function getDefaultSiteTheme(): array
+{
+    return [
+        "name" => "Still Relevant",
+        "slug" => "still-relevant",
+        "active" => true,
+        "background" => "#131c2c",
+        "surface" => "#1c283d",
+        "surface_alt" => "#101827",
+        "text" => "#f8fafc",
+        "muted" => "#cbd5e1",
+        "accent" => "#9bea00",
+        "accent_secondary" => "#f04a62",
+        "font_family" => "rounded",
+        "heading_weight" => 800,
+        "content_width" => 900,
+        "hero_width" => 600,
+        "panel_padding" => 40,
+        "section_gap" => 16,
+        "card_radius" => 14,
+        "button_radius" => 7,
+        "shadow_strength" => 12,
+        "header_opacity" => 72,
+        "hero_opacity" => 100,
+        "nav_style" => "minimal",
+        "hero_style" => "editorial",
+        "card_style" => "solid",
+        "effects" => "subtle",
+        "scope" => "colors",
+    ];
+}
+
+function getOriginalSiteTheme(): array
+{
+    return [
+        "name" => "Original",
+        "slug" => "original",
+        "active" => false,
+        "original" => true,
+        "background" => "#070b17",
+        "surface" => "#0d1224",
+        "surface_alt" => "#05070f",
+        "text" => "#f8fafc",
+        "muted" => "#cbd5e1",
+        "accent" => "#4f46e5",
+        "accent_secondary" => "#0ea5e9",
+        "font_family" => "system",
+        "heading_weight" => 700,
+        "content_width" => 1140,
+        "hero_width" => 760,
+        "panel_padding" => 48,
+        "section_gap" => 24,
+        "card_radius" => 16,
+        "button_radius" => 8,
+        "shadow_strength" => 16,
+        "header_opacity" => 55,
+        "hero_opacity" => 100,
+        "nav_style" => "bar",
+        "hero_style" => "immersive",
+        "card_style" => "outlined",
+        "effects" => "glow",
+        "scope" => "original",
+    ];
+}
+
+function sanitizeSiteTheme(array $input): array
+{
+    $defaults = getDefaultSiteTheme();
+    $theme = $defaults;
+    $name = trim((string)($input["name"] ?? $defaults["name"]));
+    $theme["name"] = substr($name !== "" ? $name : $defaults["name"], 0, 80);
+    $rawSlug = strtolower(trim((string)($input["slug"] ?? "")));
+    if ($rawSlug === "") {
+        $rawSlug = strtolower($theme["name"]);
+    }
+    $rawSlug = preg_replace('/[^a-z0-9]+/', '-', $rawSlug) ?? "";
+    $rawSlug = trim($rawSlug, "-");
+    $theme["slug"] = substr($rawSlug !== "" ? $rawSlug : "theme", 0, 64);
+    $theme["active"] = filter_var(
+        $input["active"] ?? $defaults["active"],
+        FILTER_VALIDATE_BOOLEAN,
+        FILTER_NULL_ON_FAILURE
+    ) ?? false;
+    $theme["original"] = filter_var(
+        $input["original"] ?? false,
+        FILTER_VALIDATE_BOOLEAN,
+        FILTER_NULL_ON_FAILURE
+    ) ?? false;
+
+    foreach (["background", "surface", "surface_alt", "text", "muted", "accent", "accent_secondary"] as $key) {
+        $value = strtolower(trim((string)($input[$key] ?? $defaults[$key])));
+        $theme[$key] = preg_match('/^#[0-9a-f]{6}$/', $value) ? $value : $defaults[$key];
+    }
+
+    $enumFields = [
+        "scope" => ["colors", "full", "original"],
+        "font_family" => ["rounded", "system", "mono"],
+        "nav_style" => ["minimal", "pill", "bar"],
+        "hero_style" => ["editorial", "compact", "immersive"],
+        "card_style" => ["solid", "outlined", "elevated"],
+        "effects" => ["none", "subtle", "glow"],
+    ];
+    foreach ($enumFields as $key => $allowedValues) {
+        $value = strtolower(trim((string)($input[$key] ?? $defaults[$key])));
+        $theme[$key] = in_array($value, $allowedValues, true) ? $value : $defaults[$key];
+    }
+
+    $numberFields = [
+        "heading_weight" => [500, 900],
+        "content_width" => [680, 1400],
+        "hero_width" => [480, 1100],
+        "panel_padding" => [16, 80],
+        "section_gap" => [0, 64],
+        "card_radius" => [0, 40],
+        "button_radius" => [0, 32],
+        "shadow_strength" => [0, 40],
+        "header_opacity" => [0, 100],
+        "hero_opacity" => [0, 100],
+    ];
+    foreach ($numberFields as $key => [$minimum, $maximum]) {
+        $value = (int)($input[$key] ?? $defaults[$key]);
+        $theme[$key] = max($minimum, min($maximum, $value));
+    }
+
+    return $theme;
+}
+
+function ensureSiteThemeLibrary(PDO $pdo): void
+{
+    $original = getOriginalSiteTheme();
+    $originalInsert = $pdo->prepare(
+        "INSERT OR IGNORE INTO site_themes (slug, name, theme_json, is_active, updated_at)
+         VALUES (:slug, :name, :theme_json, 0, CURRENT_TIMESTAMP)"
+    );
+    $originalInsert->execute([
+        ":slug" => $original["slug"],
+        ":name" => $original["name"],
+        ":theme_json" => json_encode($original, JSON_UNESCAPED_SLASHES),
+    ]);
+
+    $countStatement = $pdo->query("SELECT COUNT(*) AS theme_count FROM site_themes");
+    $countRow = $countStatement ? $countStatement->fetch() : false;
+    if ((int)($countRow["theme_count"] ?? 0) > 1) {
+        return;
+    }
+
+    $legacyStatement = $pdo->query("SELECT theme_json FROM site_theme WHERE id = 1 LIMIT 1");
+    $legacyRow = $legacyStatement ? $legacyStatement->fetch() : false;
+    $decoded = $legacyRow
+        ? json_decode((string)($legacyRow["theme_json"] ?? ""), true)
+        : null;
+    $theme = sanitizeSiteTheme(is_array($decoded) ? $decoded : getDefaultSiteTheme());
+    $insert = $pdo->prepare(
+        "INSERT INTO site_themes (slug, name, theme_json, is_active, updated_at)
+         VALUES (:slug, :name, :theme_json, 1, CURRENT_TIMESTAMP)"
+    );
+    $insert->execute([
+        ":slug" => $theme["slug"],
+        ":name" => $theme["name"],
+        ":theme_json" => json_encode($theme, JSON_UNESCAPED_SLASHES),
+    ]);
+}
+
+function readSiteThemes(PDO $pdo): array
+{
+    ensureSiteThemeLibrary($pdo);
+    $statement = $pdo->query(
+        "SELECT slug, name, theme_json, is_active, updated_at
+         FROM site_themes
+         ORDER BY is_active DESC, name COLLATE NOCASE ASC"
+    );
+    $themes = [];
+    while ($statement && ($row = $statement->fetch())) {
+        $decoded = json_decode((string)($row["theme_json"] ?? ""), true);
+        $theme = sanitizeSiteTheme(is_array($decoded) ? $decoded : []);
+        $theme["slug"] = (string)$row["slug"];
+        $theme["name"] = (string)$row["name"];
+        $theme["active"] = (int)$row["is_active"] === 1;
+        $themes[] = [
+            "theme" => $theme,
+            "updated_at" => (string)$row["updated_at"],
+        ];
+    }
+    return $themes;
+}
+
+function readSiteTheme(PDO $pdo, string $slug = ""): array
+{
+    $themes = readSiteThemes($pdo);
+    foreach ($themes as $entry) {
+        if (($slug !== "" && $entry["theme"]["slug"] === $slug)
+            || ($slug === "" && $entry["theme"]["active"])) {
+            return $entry;
+        }
+    }
+    return $themes[0];
+}
+
+function saveSiteTheme(PDO $pdo, array $theme): array
+{
+    ensureSiteThemeLibrary($pdo);
+    $sanitized = sanitizeSiteTheme($theme);
+    if ($sanitized["slug"] === "original") {
+        $active = $sanitized["active"];
+        $sanitized = getOriginalSiteTheme();
+        $sanitized["active"] = $active;
+    }
+    if ($sanitized["active"]) {
+        $pdo->exec("UPDATE site_themes SET is_active = 0");
+    }
+    $statement = $pdo->prepare(
+        "INSERT INTO site_themes (slug, name, theme_json, is_active, updated_at)
+         VALUES (:slug, :name, :theme_json, :is_active, CURRENT_TIMESTAMP)
+         ON CONFLICT(slug) DO UPDATE SET
+             name = excluded.name,
+             theme_json = excluded.theme_json,
+             is_active = excluded.is_active,
+             updated_at = CURRENT_TIMESTAMP"
+    );
+    $statement->execute([
+        ":slug" => $sanitized["slug"],
+        ":name" => $sanitized["name"],
+        ":theme_json" => json_encode($sanitized, JSON_UNESCAPED_SLASHES),
+        ":is_active" => $sanitized["active"] ? 1 : 0,
+    ]);
+    return $sanitized;
+}
+
 function sanitizeUploadBaseName(string $originalName): string
 {
     $base = pathinfo($originalName, PATHINFO_FILENAME);
@@ -960,6 +1206,36 @@ if (isset($_GET["preview_config"])) {
     jsonResponse([
         "status" => "OK",
         "selections" => $selections,
+    ]);
+}
+
+if (isset($_GET["theme_config"])) {
+    header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+    if (!extension_loaded("pdo_sqlite")) {
+        jsonResponse(["status" => "ERR", "msg" => "sqlite nicht verfuegbar"], 500);
+    }
+
+    try {
+        $pdo = getSqliteConnection($sqliteDir, $sqlitePath);
+        $requestedSlug = trim((string)($_GET["slug"] ?? ""));
+        $themeData = readSiteTheme($pdo, $requestedSlug);
+        $themeEntries = readSiteThemes($pdo);
+    } catch (Throwable $exception) {
+        jsonResponse(["status" => "ERR", "msg" => "theme konnte nicht geladen werden"], 500);
+    }
+
+    jsonResponse([
+        "status" => "OK",
+        "theme" => $themeData["theme"],
+        "updated_at" => $themeData["updated_at"],
+        "themes" => array_map(static function ($entry) {
+            return [
+                "slug" => $entry["theme"]["slug"],
+                "name" => $entry["theme"]["name"],
+                "active" => $entry["theme"]["active"],
+                "updated_at" => $entry["updated_at"],
+            ];
+        }, $themeEntries),
     ]);
 }
 
@@ -1190,6 +1466,36 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         jsonResponse([
             "status" => "OK",
             "selections" => $selections,
+        ]);
+    }
+
+    if ($action === "save_theme_config") {
+        $rawTheme = (string)($_POST["theme"] ?? "{}");
+        $decodedTheme = json_decode($rawTheme, true);
+        if (!is_array($decodedTheme)) {
+            jsonResponse(["status" => "ERR", "msg" => "ungueltiges theme"], 400);
+        }
+
+        try {
+            $theme = saveSiteTheme($authPdo, $decodedTheme);
+            $themeData = readSiteTheme($authPdo, $theme["slug"]);
+            $themeEntries = readSiteThemes($authPdo);
+        } catch (Throwable $exception) {
+            jsonResponse(["status" => "ERR", "msg" => "theme konnte nicht gespeichert werden"], 500);
+        }
+
+        jsonResponse([
+            "status" => "OK",
+            "theme" => $theme,
+            "updated_at" => $themeData["updated_at"],
+            "themes" => array_map(static function ($entry) {
+                return [
+                    "slug" => $entry["theme"]["slug"],
+                    "name" => $entry["theme"]["name"],
+                    "active" => $entry["theme"]["active"],
+                    "updated_at" => $entry["updated_at"],
+                ];
+            }, $themeEntries),
         ]);
     }
 

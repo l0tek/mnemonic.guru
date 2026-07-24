@@ -35,6 +35,7 @@ export default defineConfig({
         adminUpload: resolve(__dirname, "4meo/upload.html"),
         adminEditor: resolve(__dirname, "4meo/editor.html"),
         adminPreview: resolve(__dirname, "4meo/preview.html"),
+        adminTheme: resolve(__dirname, "4meo/theme.html"),
       },
     },
   },

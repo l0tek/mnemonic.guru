@@ -1,4 +1,5 @@
 ﻿import "./styles.scss";
+import "./theme-runtime.js";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./nav-dropdowns.js";
 import * as THREE from "three";
@@ -388,7 +389,7 @@ const latestWorksGrid = document.getElementById("latest-works-grid");
 const latestNewsGrid = document.getElementById("latest-news-grid");
 const latestProjectsGrid = document.getElementById("latest-projects-grid");
 const pageEditableContent = document.getElementById("page-editable-content");
-const API_URL = new URL("/api/index.php", window.location.origin).toString();
+const API_URL = "https://mnemonic.guru/api/index.php";
 const API_ORIGIN = new URL(API_URL).origin;
 const IMAGE_PATTERN = /\.(jpg|jpeg|png|gif|webp)$/i;
 const CANONICAL_HOST = "mnemonic.guru";
