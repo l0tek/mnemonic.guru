@@ -2478,6 +2478,126 @@ html[data-color-theme] :is(.btn-primary, .navbar .nav-link.active) {
     --bs-btn-hover-border-color: var(--site-theme-accent);
 }
 
+// Visuelle Theme-Optionen bei unveraendertem Original-Layout.
+html[data-color-theme] body {
+    font-family:
+        Inter,
+        ui-rounded,
+        "Arial Rounded MT Bold",
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+}
+
+html[data-color-theme][data-font="system"] body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+html[data-color-theme][data-font="mono"] body {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+html[data-color-theme] :is(h1, h2, h3, h4, h5, h6) {
+    font-weight: var(--site-theme-heading-weight);
+}
+
+html[data-color-theme] :is(.btn, .form-control, .form-select) {
+    border-radius: var(--site-theme-button-radius);
+}
+
+html[data-color-theme] :is(
+    .hero-content,
+    .latest-news-card,
+    .latest-work-card,
+    .gallery-card,
+    .gallery-hero-card,
+    .project-section-card,
+    .raspi-article-card,
+    .code-portfolio-card
+) {
+    border-radius: var(--site-theme-card-radius) !important;
+}
+
+html[data-color-theme][data-nav="pill"] .navbar .nav-link {
+    padding-inline: 0.9rem;
+    border-radius: 999px;
+}
+
+html[data-color-theme][data-nav="pill"] .navbar .nav-link.active {
+    background: var(--site-theme-accent);
+    color: var(--site-theme-surface-alt);
+}
+
+html[data-color-theme][data-nav="bar"] .navbar {
+    background: var(--site-theme-surface) !important;
+    border-bottom: 1px solid
+        color-mix(in srgb, var(--site-theme-muted) 18%, transparent) !important;
+}
+
+html[data-color-theme][data-cards="outlined"] :is(
+    .latest-news-card,
+    .latest-work-card,
+    .gallery-card,
+    .gallery-hero-card,
+    .project-section-card,
+    .raspi-article-card,
+    .code-portfolio-card
+) {
+    background: transparent;
+    border: 1px solid color-mix(in srgb, var(--site-theme-muted) 24%, transparent);
+}
+
+html[data-color-theme][data-cards="elevated"] :is(
+    .latest-news-card,
+    .latest-work-card,
+    .gallery-card,
+    .gallery-hero-card,
+    .project-section-card,
+    .raspi-article-card,
+    .code-portfolio-card
+) {
+    box-shadow: 0 20px 50px rgb(0 0 0 / var(--site-theme-shadow-strength));
+}
+
+html[data-color-theme][data-effects="none"] :is(
+    .hero-bg,
+    .hero-model-canvas,
+    .hero-canvas
+) {
+    opacity: 0;
+    pointer-events: none;
+}
+
+html[data-color-theme][data-effects="subtle"] .hero-bg {
+    opacity: 0.14;
+}
+
+html[data-color-theme][data-effects="subtle"] .hero-model-canvas {
+    opacity: 0.24;
+}
+
+html[data-color-theme][data-effects="subtle"] .hero-canvas {
+    opacity: 0.72;
+}
+
+html[data-color-theme][data-effects="glow"] .hero-content {
+    box-shadow:
+        0 0 0 1rem
+            color-mix(
+                in srgb,
+                var(--site-theme-surface) 72%,
+                var(--site-theme-background)
+            ),
+        0 0 4rem
+            color-mix(
+                in srgb,
+                var(--site-theme-accent-secondary) 35%,
+                transparent
+            );
+}
+
 html[data-site-theme="still-relevant"] body,
 html[data-site-theme="still-relevant"] .gallery-page {
     background: var(--site-theme-background);

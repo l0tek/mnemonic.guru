@@ -46,7 +46,10 @@ export const applySiteTheme = (theme) => {
   }
 
   clearManagedTheme();
-  const isColorOnly = (theme.scope || "colors") === "colors";
+  const isHackMeTheme =
+    String(theme.name || "").trim().toLowerCase() === "hackme" ||
+    String(theme.slug || "").trim().toLowerCase() === "hackme";
+  const isColorOnly = (theme.scope || "colors") === "colors" || isHackMeTheme;
   if (isColorOnly) {
     root.setAttribute("data-color-theme", theme.slug || "theme");
   } else {
@@ -60,6 +63,23 @@ export const applySiteTheme = (theme) => {
     }
   });
   if (isColorOnly) {
+    [
+      "heading_weight",
+      "card_radius",
+      "button_radius",
+      "shadow_strength",
+      "header_opacity",
+      "hero_opacity",
+    ].forEach((key) => {
+      const [property, unit] = SIZE_KEYS[key];
+      if (Number.isFinite(Number(theme[key]))) {
+        root.style.setProperty(property, `${Number(theme[key])}${unit}`);
+      }
+    });
+    root.dataset.font = theme.font_family || "rounded";
+    root.dataset.nav = theme.nav_style || "minimal";
+    root.dataset.cards = theme.card_style || "solid";
+    root.dataset.effects = theme.effects || "subtle";
     return;
   }
   Object.entries(SIZE_KEYS).forEach(([key, [property, unit]]) => {
