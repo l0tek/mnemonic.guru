@@ -1,0 +1,7 @@
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https://mnemonic.guru data: blob:; font-src 'self' data:; connect-src 'self' https://mnemonic.guru https://api.allorigins.win; object-src 'none'; base-uri 'self'; frame-src 'self'; frame-ancestors 'self'; form-action 'self'; upgrade-insecure-requests"
+</IfModule>
