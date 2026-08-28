@@ -981,6 +981,7 @@ const renderCodePortfolio = async (container, content) => {
 
   const detail = document.createElement("article");
   detail.className = "code-portfolio-detail d-none";
+  detail.id = "code-article-detail";
 
   const detailBody = document.createElement("div");
   detailBody.className = "code-portfolio-detail-body";
@@ -1009,6 +1010,7 @@ const renderCodePortfolio = async (container, content) => {
 
     const title = document.createElement("h2");
     title.className = "h4 fw-bold mb-3";
+    title.tabIndex = -1;
     title.textContent = article.title;
 
     const body = document.createElement("div");
@@ -1149,7 +1151,13 @@ const renderCodePortfolio = async (container, content) => {
     });
 
     if (requestedArticleId && requestedArticleId === article.id) {
-      autoOpen = () => renderArticleDetail(article, button, false);
+      autoOpen = () => {
+        renderArticleDetail(article, button, false);
+        window.requestAnimationFrame(() => {
+          detail.scrollIntoView({ behavior: "auto", block: "start" });
+          detail.querySelector("h2")?.focus({ preventScroll: true });
+        });
+      };
     }
 
     body.append(label, title, summary, button);
