@@ -10,6 +10,7 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 }
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB
+const PAGE_MAX_CONTENT_BYTES = 2 * 1024 * 1024; // 2MB
 const ADMIN_SESSION_COOKIE = "mg_admin_session";
 const ADMIN_SESSION_TTL_SECONDS = 60 * 60 * 12;
 const LEGACY_ADMIN_PASSWORD_SHA256 = "7da6572f4d3e3ad6f33e4612d9b2b3228936bd4a3d4bae5e4aaa8c17f86588b9";
@@ -1928,7 +1929,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
         $content = (string)($_POST["content"] ?? "");
-        if (strlen($content) > 200000) {
+        if (strlen($content) > PAGE_MAX_CONTENT_BYTES) {
             http_response_code(413);
             echo json_encode(["status" => "ERR", "msg" => "inhalt zu gross"]);
             exit;

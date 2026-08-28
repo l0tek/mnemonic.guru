@@ -1364,8 +1364,26 @@ body.is-loading > :not(#page-loader) {
 }
 
 .howto-article-body {
+    color: var(--bs-body-color);
     font-size: 1.02rem;
     line-height: 1.75;
+}
+
+.howto-article-body [style*="color"] {
+    color: inherit !important;
+}
+
+.howto-article-body [style*="background-color"] {
+    background-color: transparent !important;
+}
+
+.howto-article-body img {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    margin: 1.5rem auto;
+    border-radius: 0.5rem;
 }
 
 .howto-article-body h2,
