@@ -193,10 +193,10 @@ const renderHub = async () => {
   }
 };
 
-const parseRaspiFirstImageFromContent = (content, selectedArticleId = "") => {
+const parseProjectPreviewFromContent = (content, pageKey, selectedArticleId = "") => {
   const html = String(content || "").trim();
   if (!html) {
-    return "";
+    return null;
   }
 
   const parser = new DOMParser();
@@ -206,7 +206,7 @@ const parseRaspiFirstImageFromContent = (content, selectedArticleId = "") => {
   );
   const cards = Array.from(doc.querySelectorAll(".project-section-card"));
   if (!cards.length) {
-    return "";
+    return null;
   }
   const normalizeOwnAssetUrl = (value) => {
     const raw = String(value || "").trim();
@@ -227,37 +227,59 @@ const parseRaspiFirstImageFromContent = (content, selectedArticleId = "") => {
     normalizeOwnAssetUrl(
       card.querySelector(".project-section-body img")?.getAttribute("src") || "",
     );
-  if (selectedArticleId) {
+  const getCardPreview = (card, index) => {
+    const imageUrl = getCardImage(card);
+    if (!imageUrl) {
+      return null;
+    }
+    return {
+      id: `${pageKey}-article-${index + 1}`,
+      imageUrl,
+      title:
+        card.querySelector(".project-section-title")?.textContent?.trim() ||
+        `${pageKey} - Letzter Artikel`,
+    };
+  };
+
+  if (selectedArticleId && selectedArticleId.startsWith(`${pageKey}-article-`)) {
     const selectedIndex = Number(
-      String(selectedArticleId).replace(/^raspi-article-/, ""),
+      String(selectedArticleId).replace(`${pageKey}-article-`, ""),
     );
     const selectedCard = Number.isFinite(selectedIndex)
       ? cards[selectedIndex - 1]
       : null;
-    const selectedImage = selectedCard ? getCardImage(selectedCard) : "";
-    if (selectedImage) {
-      return selectedImage;
+    const selectedPreview = selectedCard
+      ? getCardPreview(selectedCard, selectedIndex - 1)
+      : null;
+    if (selectedPreview) {
+      return selectedPreview;
     }
   }
+
   for (let i = cards.length - 1; i >= 0; i -= 1) {
-    const image = getCardImage(cards[i]);
-    if (image) {
-      return image;
+    const preview = getCardPreview(cards[i], i);
+    if (preview) {
+      return preview;
     }
   }
-  return "";
+  return null;
 };
 
-const renderRaspiPreviewIntoLabCard = async () => {
-  const raspiLink = document.querySelector('a.btn[href="/raspi.html"]');
-  const raspiCard = raspiLink?.closest(".gallery-hero-card");
-  const media = raspiCard?.querySelector(".gallery-hero-media");
+const renderArticlePreviewIntoLabCard = async ({
+  pageKey,
+  pageUrl,
+  selectionKey = "",
+  label,
+}) => {
+  const pageLink = document.querySelector(`a.btn[href="${pageUrl}"]`);
+  const pageCard = pageLink?.closest(".gallery-hero-card");
+  const media = pageCard?.querySelector(".gallery-hero-media");
   if (!media) {
     return;
   }
 
   try {
-    const response = await fetch(`${API_URL}?page_content=1&page=raspi`, {
+    const response = await fetch(`${API_URL}?page_content=1&page=${pageKey}`, {
       cache: "no-store",
     });
     if (!response.ok) {
@@ -269,28 +291,48 @@ const renderRaspiPreviewIntoLabCard = async () => {
     }
 
     const previewSelections = await fetchPreviewSelections();
-    const selectedArticleId = String(previewSelections.lab_raspi_article || "");
-    const imageUrl = parseRaspiFirstImageFromContent(
+    const selectedArticleId = String(previewSelections[selectionKey] || "");
+    const preview = parseProjectPreviewFromContent(
       payload?.content || "",
+      pageKey,
       selectedArticleId,
     );
-    if (!imageUrl) {
+    if (!preview?.imageUrl) {
       return;
     }
 
     const image = document.createElement("img");
     image.className = "gallery-hero-image";
     image.loading = "lazy";
-    image.alt = "Raspi - Letzter Artikel";
-    image.src = imageUrl;
+    image.alt = `${label} - ${preview.title}`;
+    image.src = preview.imageUrl;
 
     media.classList.remove("is-empty");
     media.innerHTML = "";
     media.appendChild(image);
+
+    if (preview.id && pageLink) {
+      pageLink.href = `${pageUrl}?article=${encodeURIComponent(preview.id)}`;
+    }
   } catch (error) {
-    console.error("Lab raspi preview failed:", error);
+    console.error(`Lab ${pageKey} preview failed:`, error);
   }
 };
+
+const renderRaspiPreviewIntoLabCard = async () =>
+  renderArticlePreviewIntoLabCard({
+    pageKey: "raspi",
+    pageUrl: "/raspi.html",
+    selectionKey: "lab_raspi_article",
+    label: "Raspi",
+  });
+
+const renderEsp32PreviewIntoLabCard = async () =>
+  renderArticlePreviewIntoLabCard({
+    pageKey: "esp32",
+    pageUrl: "/esp32.html",
+    label: "esp32",
+  });
 
 const renderCodePreviewIntoLabCard = async () => {
   const codeLink = document.querySelector('a.btn[href="/code.html"]');
@@ -361,4 +403,5 @@ prefersDark.addEventListener("change", (event) => {
 
 renderHub();
 renderRaspiPreviewIntoLabCard();
+renderEsp32PreviewIntoLabCard();
 renderCodePreviewIntoLabCard();
