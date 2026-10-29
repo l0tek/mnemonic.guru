@@ -1,5 +1,7 @@
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
+import { initAdminNavigation } from "./admin-navigation.js";
+
 export const STORAGE_KEY = "theme-preference";
 export const ADMIN_AUTH_KEY = "admin-authenticated";
 export const API_URL = new URL("/api/index.php", window.location.origin).toString();
@@ -72,6 +74,7 @@ export const isAuthenticated = () => {
 };
 
 export const initAdminShell = ({ onAuthenticated } = {}) => {
+  initAdminNavigation();
   const themeToggleButton = document.getElementById("theme-toggle");
   const loginForm = document.getElementById("admin-login-form");
   const usernameInput = document.getElementById("admin-username");

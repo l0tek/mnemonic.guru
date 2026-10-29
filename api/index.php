@@ -55,6 +55,22 @@ const P5_MAX_SNIPPETS = 12;
 const P5_MAX_SNIPPET_BYTES = 20000;
 const P5_MAX_DESCRIPTION_BYTES = 20000;
 
+function resolveManagedImage(string $directory, string $filename): string
+{
+    if ($filename === "" || strpos($filename, "\0") !== false || preg_match('~[/\\\\]~', $filename)
+        || !preg_match('/\.(jpe?g|png|webp|gif|avif)$/i', $filename)) {
+        throw new InvalidArgumentException("Ungueltiger Bilddateiname.");
+    }
+    $root = realpath($directory);
+    $candidate = $directory . "/" . $filename;
+    $resolved = realpath($candidate);
+    if ($root === false || $resolved === false || !is_file($resolved) || is_link($candidate)
+        || dirname($resolved) !== $root) {
+        throw new InvalidArgumentException("Bild nicht gefunden.");
+    }
+    return $resolved;
+}
+
 function sanitizePathSegment(string $segment): string
 {
     $clean = trim(str_replace("\\", "/", $segment));
@@ -1450,6 +1466,61 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         jsonResponse(["status" => "ERR", "msg" => "authentifizierung fehlgeschlagen"], 401);
     }
 
+    if ($action === "list_images" || $action === "delete_image") {
+        $category = strtolower(trim((string)($_POST["category"] ?? "")));
+        if (!isset($typeToFolder[$category])) {
+            jsonResponse(["status" => "ERR", "msg" => "Ungueltige Bildkategorie."], 400);
+        }
+        $directory = $typeToFolder[$category];
+        if ($action === "list_images") {
+            $images = [];
+            $entries = is_dir($directory) ? scandir($directory) : [];
+            if ($entries === false) {
+                jsonResponse(["status" => "ERR", "msg" => "Bilder konnten nicht geladen werden."], 500);
+            }
+            foreach ($entries as $filename) {
+                try {
+                    resolveManagedImage($directory, $filename);
+                } catch (InvalidArgumentException $exception) {
+                    continue;
+                }
+                $publicDirectory = str_replace("\\", "/", substr($directory, strlen($baseDir)));
+                $url = $publicDirectory . "/" . rawurlencode($filename);
+                $thumbnail = $url;
+                if (!is_link($directory . "/tn") && is_file($directory . "/tn/" . $filename)) {
+                    $thumbnail = $publicDirectory . "/tn/" . rawurlencode($filename);
+                }
+                $images[] = ["name" => $filename, "url" => $url, "thumbnail" => $thumbnail];
+            }
+            usort($images, static function ($a, $b) { return strnatcasecmp($a["name"], $b["name"]); });
+            jsonResponse(["status" => "OK", "images" => $images]);
+        }
+        $filename = (string)($_POST["filename"] ?? "");
+        try {
+            $target = resolveManagedImage($directory, $filename);
+        } catch (InvalidArgumentException $exception) {
+            jsonResponse(["status" => "ERR", "msg" => $exception->getMessage()], 400);
+        }
+        if (!@unlink($target)) {
+            jsonResponse(["status" => "ERR", "msg" => "Bild konnte nicht geloescht werden."], 500);
+        }
+        $warning = "";
+        if (file_exists($directory . "/tn/" . $filename)) {
+            try {
+                if (is_link($directory . "/tn")) {
+                    throw new InvalidArgumentException("Ungueltiges Vorschaubild-Verzeichnis.");
+                }
+                $thumbnail = resolveManagedImage($directory . "/tn", $filename);
+                if (!@unlink($thumbnail)) {
+                    $warning = "Das Bild wurde geloescht, das Vorschaubild konnte nicht entfernt werden.";
+                }
+            } catch (InvalidArgumentException $exception) {
+                $warning = "Das Bild wurde geloescht, das Vorschaubild konnte nicht entfernt werden.";
+            }
+        }
+        jsonResponse(["status" => "OK", "warning" => $warning]);
+    }
+
     if ($action === "save_preview_config") {
         $rawSelections = (string)($_POST["selections"] ?? "{}");
         $decodedSelections = json_decode($rawSelections, true);
@@ -1918,6 +1989,32 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             "files_uploaded" => $movedCount,
         ]);
         exit;
+    }
+
+    if ($action === "import_howtos") {
+        $content = trim((string)($_POST["content"] ?? ""));
+        if ($content === "" || strlen($content) > PAGE_MAX_CONTENT_BYTES) {
+            jsonResponse(["status" => "ERR", "msg" => "Import ist leer oder zu gross (max. 2 MB)."], 400);
+        }
+        try {
+            ensurePageSeed($authPdo, "howto", getPageFallbackContent($editablePages["howto"]));
+            // Acquire the write lock before reading so concurrent imports cannot overwrite each other.
+            $authPdo->exec("BEGIN IMMEDIATE");
+            $existing = readPageContentFromStore($authPdo, "howto");
+            $combined = (string)$existing["content"] . "\n" . $content;
+            if (strlen($combined) > PAGE_MAX_CONTENT_BYTES) {
+                $authPdo->exec("ROLLBACK");
+                jsonResponse(["status" => "ERR", "msg" => "Howtos ueberschreiten mit diesem Import das Limit von 2 MB."], 413);
+            }
+            savePageContentToStore($authPdo, "howto", $combined);
+            $authPdo->exec("COMMIT");
+        } catch (Throwable $exception) {
+            if ($authPdo->inTransaction()) {
+                $authPdo->rollBack();
+            }
+            jsonResponse(["status" => "ERR", "msg" => "Howtos konnten nicht importiert werden."], 500);
+        }
+        jsonResponse(["status" => "OK", "page" => "howto"]);
     }
 
     if ($action === "save_page") {

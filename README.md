@@ -94,5 +94,16 @@ npm run preview
 
 ## Hinweise
 
+### Admin und README-Import
+
+- Unter `/4meo/` sind die Aufgaben in Übersicht, Inhalte, Medien und Gestaltung aufgeteilt.
+- **Inhalte → README importieren** öffnet `/4meo/import.html`. Nach der Vorschau veröffentlicht der Import jede Markdown-Datei als neues Howto.
+- Gespeichert wird der formatierte HTML-Inhalt in `data/content.sqlite` im Website-Verzeichnis auf dem Server (Tabelle `pages`, Schlüssel `howto`). Die originale `.md`-Datei wird nicht hochgeladen oder archiviert; `howto.html` wird nicht überschrieben.
+- Importierte Anleitungen sind unter `/howto.html` öffentlich sichtbar und lassen sich über **Inhalte → Howtos bearbeiten** ändern. Ein erneuter Import fügt weitere Einträge hinzu.
+- Lokale Bilder werden nicht mit importiert. Für relative Links und Bilder kann eine öffentliche Basis-URL angegeben werden.
+- Für Sicherungen die SQLite-Datenbank und die ursprünglichen Markdown-Dateien aufbewahren.
+- Einzelne Howtos oder Projekte lassen sich im Editor über **Eintrag entfernen** vormerken. **Speichern** übernimmt die Löschung; auch der letzte Eintrag kann entfernt werden.
+- Unter **Medien → Hochgeladene Bilder verwalten** können Bilder nach Kategorie und Dateiname gesucht und dauerhaft inklusive Vorschaubild gelöscht werden. Bildverweise in Seiteninhalten werden nicht automatisch entfernt. p5.js-Projekte haben eine eigene Löschfunktion in der Projektliste.
+
 - Der Build laeuft aktuell trotz Bootstrap-Sass-Deprecation-Warnungen sauber durch.
 - Vite meldet weiterhin grosse Chunks fuer das Hauptbundle.

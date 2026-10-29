@@ -26,29 +26,9 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="admin-navbar-nav">
-                    <ul class="navbar-nav gap-lg-2 me-lg-auto mb-3 mb-lg-0">
-                        <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="/4meo/index.html">Dashboard</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/4meo/upload.html">Uploads</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/4meo/editor.html">Editor</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/4meo/editor.html?page=howto">Howto bearbeiten</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/4meo/preview.html">Voransicht</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/4meo/theme.html">Themen</a>
-                        </li>
-                    </ul>
+                    <ul class="navbar-nav me-lg-auto mb-3 mb-lg-0" data-admin-navigation></ul>
                     <div class="admin-navbar-meta">
                         <strong id="admin-user-label"></strong>
-                        <span>Dashboard</span>
                     </div>
                     <button id="admin-logout" class="btn btn-outline-danger admin-logout d-none" type="button">
                         Abmelden
@@ -105,57 +85,36 @@
 
                 <section id="admin-content" class="d-none" aria-live="polite">
                     <div class="admin-section-heading mb-4">
-                        <p class="text-uppercase text-body-secondary fw-semibold mb-1">
-                            Uebersicht
-                        </p>
-                        <h1 class="h3 mb-2">Admin Dashboard</h1>
-                        <p class="text-body-secondary mb-0">
-                            Inhalte, Uploads und kreative Code-Projekte zentral verwalten.
-                        </p>
+                        <h1 class="h3 mb-2">Verwaltung</h1>
+                        <p class="text-body-secondary mb-0">Was m&ouml;chtest du bearbeiten?</p>
                     </div>
-
                     <div class="admin-dashboard-grid">
                         <article class="admin-shortcut-card">
-                            <p class="text-uppercase small text-body-secondary fw-semibold mb-2">Content</p>
-                            <h2 class="h5 fw-bold mb-2">Seiten Editor</h2>
-                            <p class="text-body-secondary mb-3">
-                                Raspi, esp32, Code und Howto als Karten und Detailseiten pflegen.
-                            </p>
-                            <a class="btn btn-primary" href="/4meo/editor.html">Editor oeffnen</a>
+                            <h2 class="h5 fw-bold mb-3">Inhalte</h2>
+                            <ul class="admin-task-links">
+                                <li><a href="/4meo/editor.html">Seiten bearbeiten</a><small>Raspi, esp32 und Code pflegen.</small></li>
+                                <li><a href="/4meo/editor.html?page=howto">Howtos bearbeiten</a><small>Anleitungen und bereits importierte READMEs bearbeiten.</small></li>
+                                <li><a href="/4meo/import.html">README importieren</a><small>Markdown mit Vorschau als neues Howto ver&ouml;ffentlichen.</small></li>
+                            </ul>
                         </article>
                         <article class="admin-shortcut-card">
-                            <p class="text-uppercase small text-body-secondary fw-semibold mb-2">Assets</p>
-                            <h2 class="h5 fw-bold mb-2">Uploads</h2>
-                            <p class="text-body-secondary mb-3">
-                                Bilder und p5.js Projekte hochladen, bearbeiten oder loeschen.
-                            </p>
-                            <a class="btn btn-outline-primary" href="/4meo/upload.html">Uploads verwalten</a>
+                            <h2 class="h5 fw-bold mb-3">Medien</h2>
+                            <ul class="admin-task-links">
+                                <li><a href="/4meo/upload.html">Bilder &amp; p5.js-Projekte</a><small>Bilder hochladen und kreative Code-Projekte verwalten.</small></li>
+                            </ul>
                         </article>
                         <article class="admin-shortcut-card">
-                            <p class="text-uppercase small text-body-secondary fw-semibold mb-2">Howto</p>
-                            <h2 class="h5 fw-bold mb-2">Anleitungen</h2>
-                            <p class="text-body-secondary mb-3">
-                                Howtos direkt im passenden Editor-Kontext bearbeiten.
-                            </p>
-                            <a class="btn btn-outline-primary" href="/4meo/editor.html?page=howto">Howto bearbeiten</a>
-                        </article>
-                        <article class="admin-shortcut-card">
-                            <p class="text-uppercase small text-body-secondary fw-semibold mb-2">Featured</p>
-                            <h2 class="h5 fw-bold mb-2">Voransicht</h2>
-                            <p class="text-body-secondary mb-3">
-                                Galerie-Bilder, Lab-Kacheln und Projektvorschauen gezielt auswaehlen.
-                            </p>
-                            <a class="btn btn-outline-primary" href="/4meo/preview.html">Voransicht waehlen</a>
-                        </article>
-                        <article class="admin-shortcut-card">
-                            <p class="text-uppercase small text-body-secondary fw-semibold mb-2">Design</p>
-                            <h2 class="h5 fw-bold mb-2">Themen Manager</h2>
-                            <p class="text-body-secondary mb-3">
-                                Website-Farben bearbeiten, live ansehen und global aktivieren.
-                            </p>
-                            <a class="btn btn-outline-primary" href="/4meo/theme.html">Themen verwalten</a>
+                            <h2 class="h5 fw-bold mb-3">Gestaltung</h2>
+                            <ul class="admin-task-links">
+                                <li><a href="/4meo/preview.html">Vorschaubilder</a><small>Inhalte f&uuml;r Startseite, Galerie und Lab ausw&auml;hlen.</small></li>
+                                <li><a href="/4meo/theme.html">Themes &amp; Farben</a><small>Das Erscheinungsbild der Website anpassen.</small></li>
+                            </ul>
                         </article>
                     </div>
+                    <aside class="admin-storage-note mt-4">
+                        <h2 class="h6">Importierte READMEs wiederfinden</h2>
+                        <p>Nach dem Import stehen die Anleitungen unter <a href="/howto.html">Howtos auf der Website</a>. Zum Bearbeiten &ouml;ffnest du <a href="/4meo/editor.html?page=howto">Inhalte &rarr; Howtos bearbeiten</a>. Der Inhalt wird in der Datenbank gespeichert; die urspr&uuml;ngliche Markdown-Datei bleibt auf deinem Ger&auml;t.</p>
+                    </aside>
                 </section>
             </section>
         </main>

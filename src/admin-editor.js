@@ -1,4 +1,5 @@
 import Quill from "quill";
+import { initAdminNavigation } from "./admin-navigation.js";
 import "quill/dist/quill.snow.css";
 import "./styles.scss";
 import {
@@ -16,6 +17,7 @@ const editorStatus = document.getElementById("admin-editor-status");
 const editorRoot = document.getElementById("admin-editor");
 const projectList = document.getElementById("admin-project-list");
 const projectNewButton = document.getElementById("project-new");
+const projectDeleteButton = document.getElementById("project-delete");
 const projectTitleInput = document.getElementById("project-title");
 const projectSummaryInput = document.getElementById("project-summary");
 const projectListLabel = document.querySelector('label[for="admin-project-list"]');
@@ -27,6 +29,7 @@ let projects = [];
 let activeProjectIndex = -1;
 let sourceModeActive = false;
 let sourceEditor = null;
+let loadedPage = "";
 const requestedEditorPage = String(
   new URLSearchParams(window.location.search).get("page") || "",
 )
@@ -55,6 +58,11 @@ const getCurrentEntryPlural = () => {
 
 const updateEditorCopy = () => {
   const isHowto = String(editorPageSelect?.value || "").toLowerCase() === "howto";
+  document.getElementById("editor-heading").textContent = isHowto ? "Howtos bearbeiten" : "Seiten bearbeiten";
+  document.getElementById("editor-description").textContent = isHowto
+    ? "Hier findest du alle Anleitungen, auch importierte READMEs. Wähle links einen Eintrag. Gespeicherte Änderungen sind sofort auf der Website sichtbar."
+    : "Seite auswählen und Projekte bearbeiten. Gespeicherte Änderungen sind sofort auf der Website sichtbar.";
+  document.getElementById("editor-import-link").classList.toggle("d-none", !isHowto);
   if (projectListLabel) {
     projectListLabel.textContent = isHowto ? "Howtos" : "Projekte";
   }
@@ -504,6 +512,13 @@ const saveActiveProjectFromFields = () => {
 };
 
 const loadActiveProjectIntoFields = () => {
+  if (activeProjectIndex < 0 || !projects[activeProjectIndex]) {
+    if (projectTitleInput) projectTitleInput.value = "";
+    if (projectSummaryInput) projectSummaryInput.value = "";
+    if (sourceModeActive) setSourceMode(false);
+    if (editorInstance) editorInstance.root.innerHTML = "<p><br></p>";
+    return;
+  }
   if (
     activeProjectIndex < 0 ||
     !projects[activeProjectIndex] ||
@@ -535,10 +550,23 @@ const setActiveProject = (index) => {
 };
 
 const renderProjectList = () => {
+  if (projectDeleteButton) {
+    projectDeleteButton.disabled = !projects[activeProjectIndex];
+    projectDeleteButton.textContent = `Ausgewähltes ${getCurrentEntryLabel()} löschen`;
+    projectDeleteButton.setAttribute("aria-label", projects[activeProjectIndex]
+      ? `${getCurrentEntryLabel()} „${projects[activeProjectIndex].title}“ löschen`
+      : `${getCurrentEntryLabel()} löschen`);
+  }
   if (!projectList) {
     return;
   }
   projectList.innerHTML = "";
+  if (!projects.length) {
+    const empty = document.createElement("p");
+    empty.className = "small text-body-secondary p-3";
+    empty.textContent = `Keine ${getCurrentEntryPlural()} vorhanden. Du kannst einen neuen Eintrag anlegen.`;
+    projectList.appendChild(empty);
+  }
   projects.forEach((project, index) => {
     const button = document.createElement("button");
     button.type = "button";
@@ -556,7 +584,7 @@ const renderProjectList = () => {
 const parseProjectsFromHtml = (content) => {
   const trimmed = String(content || "").trim();
   if (!trimmed) {
-    return [createEmptyProject(0)];
+    return [];
   }
 
   const parser = new DOMParser();
@@ -630,6 +658,7 @@ const loadEditablePage = async () => {
   }
 
   const page = String(editorPageSelect.value || "raspi");
+  loadedPage = "";
   updateStatus(editorStatus, "Seiteninhalt wird geladen ...");
 
   try {
@@ -639,6 +668,7 @@ const loadEditablePage = async () => {
     );
     const result = await parseApiResponse(response);
     projects = parseProjectsFromHtml(result.content || "");
+    loadedPage = page;
     activeProjectIndex = 0;
     renderProjectList();
     loadActiveProjectIntoFields();
@@ -678,6 +708,18 @@ if (projectNewButton) {
   });
 }
 
+projectDeleteButton?.addEventListener("click", () => {
+  const project = projects[activeProjectIndex];
+  if (!project) return;
+  const title = projectTitleInput?.value.trim() || project.title;
+  if (!window.confirm(`„${title}“ entfernen? Die Löschung wird mit „Speichern“ übernommen.`)) return;
+  projects.splice(activeProjectIndex, 1);
+  activeProjectIndex = projects.length ? Math.min(activeProjectIndex, projects.length - 1) : -1;
+  renderProjectList();
+  loadActiveProjectIntoFields();
+  updateStatus(editorStatus, `„${title}“ zum Löschen vorgemerkt. Jetzt „Speichern“ klicken, um die Löschung auf der Website zu übernehmen.`);
+});
+
 if (projectTitleInput) {
   projectTitleInput.addEventListener("input", () => {
     saveActiveProjectFromFields();
@@ -703,6 +745,7 @@ if (editorForm && editorPageSelect && editorLoadButton) {
       String(editorPageSelect.value || "").trim().toLowerCase(),
     );
     window.history.replaceState({}, "", nextUrl);
+    initAdminNavigation();
     loadEditablePage();
   });
   editorForm.addEventListener("submit", async (event) => {
@@ -715,18 +758,15 @@ if (editorForm && editorPageSelect && editorLoadButton) {
       return;
     }
 
+    if (loadedPage !== String(editorPageSelect.value || "raspi")) {
+      updateStatus(editorStatus, "Bitte die Seite zuerst erfolgreich laden.", "error");
+      return;
+    }
+
     if (sourceModeActive) {
       syncEditorFromSource();
     }
     saveActiveProjectFromFields();
-    if (!projects.length) {
-      updateStatus(
-        editorStatus,
-        `Keine ${getCurrentEntryPlural()} zum Speichern vorhanden.`,
-        "error",
-      );
-      return;
-    }
 
     const page = String(editorPageSelect.value || "raspi");
     const content = buildProjectsHtml();

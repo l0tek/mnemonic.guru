@@ -1,0 +1,27 @@
+.howto-article-body {
+    overflow-wrap: anywhere;
+
+    img { max-width: 100%; height: auto; }
+
+    table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+        margin-bottom: 1.5rem;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        border: 1px solid var(--bs-border-color);
+        padding: 0.5rem 0.75rem;
+    }
+
+    th { background: var(--bs-tertiary-bg); }
+}
+
+.readme-import-preview .project-section-card {
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.5rem;
+}

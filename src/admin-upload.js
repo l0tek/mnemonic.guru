@@ -1,4 +1,5 @@
 import "./styles.scss";
+import { loadImages } from "./admin-images.js";
 import {
   API_URL,
   initAdminShell,
@@ -36,6 +37,7 @@ const UPLOAD_TYPE_MAP = {
 initAdminShell({
   onAuthenticated: () => {
     window.setTimeout(() => void loadP5Projects(), 0);
+    void loadImages();
   },
 });
 
@@ -225,6 +227,7 @@ if (uploadForm && uploadStatus && uploadImageInput) {
       await parseApiResponse(response);
       updateStatus(uploadStatus, "Upload erfolgreich gespeichert.", "success");
       uploadForm.reset();
+      await loadImages(uploadType);
     } catch (error) {
       updateStatus(
         uploadStatus,

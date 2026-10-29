@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="de" data-bs-theme="light">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>mnemonic.guru - README Import</title>
+        <link rel="stylesheet" href="/assets/bootstrap.bundle.css" />
+    </head>
+    <body class="admin-page">
+
+        <nav class="admin-navbar admin-navbar--top navbar navbar-expand-lg" aria-label="Admin Navigation">
+            <div class="container admin-navbar-inner">
+                <a class="navbar-brand admin-navbar-brand" href="/4meo/index.html">
+                    <span class="admin-navbar-kicker">mnemonic.guru</span>
+                    <span class="admin-navbar-title">Admin</span>
+                </a>
+                <button
+                    class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#admin-navbar-nav"
+                    aria-controls="admin-navbar-nav"
+                    aria-expanded="false"
+                    aria-label="Admin Navigation umschalten"
+                >
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="admin-navbar-nav">
+                    <ul class="navbar-nav me-lg-auto mb-3 mb-lg-0" data-admin-navigation></ul>
+                    <div class="admin-navbar-meta">
+                        <strong id="admin-user-label"></strong>
+                    </div>
+                    <button id="admin-logout" class="btn btn-outline-danger admin-logout d-none" type="button">
+                        Abmelden
+                    </button>
+                    <button
+                        id="theme-toggle"
+                        class="btn btn-outline-secondary theme-toggle admin-navbar-theme"
+                        type="button"
+                        aria-label="Zu Darkmode wechseln"
+                    >
+                        <span class="theme-icon" aria-hidden="true">&#127769;</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="container-fluid py-5 px-3 px-lg-4">
+            <section class="admin-shell mx-auto">
+                <form id="admin-login-form" class="admin-login-form admin-login-panel">
+                    <div class="mb-4">
+                        <p class="text-uppercase text-body-secondary fw-semibold mb-1">
+                            Secure Login
+                        </p>
+                        <h1 class="h3 mb-2">Admin Anmeldung</h1>
+                        <p class="text-body-secondary mb-0">
+                            Melde dich mit deinem Admin-Konto an. Die Sitzung wird serverseitig gespeichert.
+                        </p>
+                    </div>
+                    <label class="form-label" for="admin-username">Benutzer</label>
+                    <input
+                        id="admin-username"
+                        class="form-control"
+                        type="text"
+                        autocomplete="username"
+                        value="admin"
+                        required
+                    />
+                    <label class="form-label mt-3" for="admin-password">Passwort</label>
+                    <input
+                        id="admin-password"
+                        class="form-control"
+                        type="password"
+                        autocomplete="current-password"
+                        required
+                    />
+                    <button class="btn btn-primary w-100 mt-3" type="submit">
+                        Anmelden
+                    </button>
+                    <p id="admin-login-status" class="small text-body-secondary mt-3 mb-0 d-none"></p>
+                    <p id="admin-login-error" class="text-danger small mt-2 mb-0 d-none">
+                        Login fehlgeschlagen.
+                    </p>
+                </form>
+
+                <section id="admin-content" class="d-none">
+                    <div class="admin-section-heading mb-4">
+                        <h1 class="h3">README importieren</h1>
+                        <p class="text-body-secondary">README auswählen, Vorschau prüfen und als Howto veröffentlichen.</p>
+                    </div>
+                    <aside class="admin-storage-note mb-4" aria-labelledby="readme-storage-heading">
+                        <h2 id="readme-storage-heading" class="h6">Wo landet meine README?</h2>
+                        <p>Der Inhalt wird als Anleitung unter <a href="/howto.html">Howtos</a> gespeichert und ist nach dem Import sofort öffentlich sichtbar. Du findest ihn anschließend unter <a href="/4meo/editor.html?page=howto">Inhalte → Howtos bearbeiten</a>.</p>
+                        <p>Die ursprüngliche <code>.md</code>-Datei bleibt auf deinem Gerät. Auf dem Server wird der formatierte Inhalt gespeichert. Jede Datei erzeugt ein neues Howto; ein erneuter Import legt einen weiteren Eintrag an.</p>
+                        <details>
+                            <summary>Speicherort &amp; Sicherung</summary>
+                            <p class="mt-2">Die Inhalte liegen auf dem Server in <code>data/content.sqlite</code> im Website-Verzeichnis, Tabelle <code>pages</code>, Eintrag <code>howto</code>. Es wird keine separate README-Datei abgelegt und die Datei <code>howto.html</code> wird nicht verändert. Sichere die SQLite-Datenbank und bewahre deine Originaldateien auf.</p>
+                        </details>
+                    </aside>
+                    <form id="readme-import-form" class="admin-shortcut-card mb-4">
+                        <label class="form-label" for="readme-files">README / Markdown-Dateien</label>
+                        <input id="readme-files" class="form-control mb-3" type="file" accept=".md,text/markdown" multiple required aria-describedby="readme-help" />
+                        <p id="readme-help" class="small text-body-secondary">Maximal 2 MB insgesamt. Der Titel wird aus der ersten Hauptüberschrift übernommen. Lokale Bilddateien werden nicht mit importiert.</p>
+                        <details class="mb-3">
+                            <summary>Relative Links und Bilder (optional)</summary>
+                            <label class="form-label mt-3" for="readme-base-url">Öffentliche Basis-URL des README-Ordners</label>
+                            <input id="readme-base-url" class="form-control" type="url" placeholder="https://example.org/projekt/" aria-describedby="readme-base-help" />
+                            <p id="readme-base-help" class="small text-body-secondary mt-2 mb-0">Für Verweise wie <code>bilder/setup.png</code>. Bilder müssen unter dieser URL bereits erreichbar sein.</p>
+                        </details>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button id="readme-submit" class="btn btn-primary" type="submit" disabled>Als Howtos veröffentlichen</button>
+                        </div>
+                        <p id="readme-status" class="small text-body-secondary mt-3 mb-0" role="status" aria-live="polite"></p>
+                    </form>
+                    <h2 class="h5">Vorschau</h2>
+                    <div id="readme-preview" class="howto-article-body readme-import-preview"><p class="text-body-secondary">Wähle eine Markdown-Datei, um die Vorschau zu sehen.</p></div>
+                </section>
+            </section>
+        </main>
+        <script type="module" src="/src/admin-import.js"></script>
+    </body>
+</html>

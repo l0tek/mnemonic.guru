@@ -1,5 +1,6 @@
 ﻿import "./styles.scss";
 import "./theme-runtime.js";
+import "./howto-markdown.scss";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./nav-dropdowns.js";
 import * as THREE from "three";
@@ -1618,6 +1619,10 @@ const renderHowtoIndex = (container, pageKey, content) => {
     (a, b) => b.originalIndex - a.originalIndex,
   );
   if (!articles.length) {
+    if (!String(content || "").trim()) {
+      container.innerHTML = '<p class="text-body-secondary">Aktuell sind keine Howtos vorhanden.</p>';
+      return true;
+    }
     return false;
   }
 
@@ -1658,16 +1663,19 @@ const renderHowtoDetail = (container, pageKey, content) => {
     (a, b) => b.originalIndex - a.originalIndex,
   );
   if (!articles.length) {
-    return false;
+    container.innerHTML = '<p>Dieses Howto ist nicht mehr verfügbar.</p><a href="/howto.html">Zur Howto-Übersicht</a>';
+    return true;
   }
 
   const requestedSlug =
     String(new URLSearchParams(window.location.search).get("howto") || "")
       .trim()
       .toLowerCase() || getHowtoSlug(articles[0]);
-  const article =
-    articles.find((entry) => getHowtoSlug(entry) === requestedSlug) ||
-    articles[0];
+  const article = articles.find((entry) => getHowtoSlug(entry) === requestedSlug);
+  if (!article) {
+    container.innerHTML = '<p>Dieses Howto ist nicht mehr verfügbar.</p><a href="/howto.html">Zur Howto-Übersicht</a>';
+    return true;
+  }
 
   const layout = document.createElement("div");
   layout.className = "howto-detail-layout";

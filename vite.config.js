@@ -33,6 +33,7 @@ export default defineConfig({
         news: resolve(__dirname, "news.html"),
         adminDashboard: resolve(__dirname, "4meo/index.html"),
         adminUpload: resolve(__dirname, "4meo/upload.html"),
+        adminImport: resolve(__dirname, "4meo/import.html"),
         adminEditor: resolve(__dirname, "4meo/editor.html"),
         adminPreview: resolve(__dirname, "4meo/preview.html"),
         adminTheme: resolve(__dirname, "4meo/theme.html"),
